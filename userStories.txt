@@ -1,0 +1,13 @@
+**Deposit funds
+1) As a user I want to be able to see where my income incoming cash is coming from so that i can see where my cash flow is from.
+2) As a user i want to deposit mony into my account so that i can do future investments
+3) As a user I want to see an updated running balance so tha I know the resuls of my transactions
+4) As a user I want to see previous account transactions so that I can keep track of my cash flow
+5) As a stakeholder I want all deposits to be validated so that the portfolio management system is secure
+**Withdraw funds
+1) As a user I want to be able to see what transaction type my previous transactions were so that i can see what categories I am spending in
+2) As a stakeholder I want all withdrawls to be validated so that the portfolio management system is secure
+3) As a user I want to be notified if I try to withdraw more money that I have available in my account so that I do not overdraft
+**Balance tracking
+1) As a user I want to be able to view an accurate running balance of my account so that I no exactly how much money I have
+2) As a stakeholder I want transactions to be blocked if they were to cuase the balance to go negative so that we do not lose money
