@@ -9,6 +9,8 @@ Contributors:
 Vansh Thacker
 
 
+Ishbel Macglone
+
 =======
 Matthew
 >>>>>>> README.md
