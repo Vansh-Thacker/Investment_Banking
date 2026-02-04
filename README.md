@@ -2,6 +2,12 @@
 
 Welcome to your-bank!!
 
+
+
+Contributors:
+Vansh Thacker
+
+
 ## running
 
     ./mvnw.cmd clean jooby:run
