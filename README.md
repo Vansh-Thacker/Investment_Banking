@@ -7,9 +7,15 @@ Welcome to your-bank!!
 
 Contributors:
 Vansh Thacker
-Emmanuel
-Matthew
 
+
+Ishbel Macglone
+
+Emmanuel Fadipe
+
+=======
+Matthew
+>>>>>>> README.md
 ## running
 
     ./mvnw.cmd clean jooby:run
