@@ -55,6 +55,27 @@ public class ExampleController {
         return Unirest.get("https://icanhazdadjoke.com/").accept("text/plain").asString().getBody();
     }
 
+    // magic 8ball
+    @GET("/magic8ball")
+    public String ball() {
+        int answer = new Random().nextInt(6);
+        String output = "";
+        if (answer==1) {
+            output = "Yes";
+        } else if (answer==2) {
+            output = "No";
+        } else if (answer==3) {
+            output = "try again later";
+        } else if (answer==4) {
+            output = "all signs point to yes";
+        } else if (answer==5) {
+            output = "looks like no";
+        } else if (answer==6) {
+            output = "definitely yes";
+        }
+        return output;
+    }
+
     /*
     This request makes a call to the passed in data source (The Database) which has been set up in App.java
      */
