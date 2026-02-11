@@ -19,6 +19,7 @@ public class CashService {
     public void withdraw(int amount) {
         account.withdraw(amount);
         // add to history
+        changeHistory(amount);
     }
 
     public int getBalance() {
@@ -27,6 +28,12 @@ public class CashService {
 
     public List<CashTransaction> getHistory() {
         return history;
+    }
+
+    public void changeHistory(int amount) {
+        CashTransaction transaction = new CashTransaction();
+
+        history.add(transaction);
     }
 
 
