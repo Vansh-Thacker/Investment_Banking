@@ -6,9 +6,11 @@ import java.util.List;
 public class CashService {
     private final Account account;
     private final List<CashTransaction> history = new ArrayList<>();
+    private final String Transctiontype;
 
     public CashService(Account account) {
         this.account = account; //store Account inside this.account so we can deposit withraw etc
+        this.Transctiontype = "";
     }
 
     public void deposit(int amount) {
@@ -36,7 +38,7 @@ public class CashService {
         history.add(transaction);
     }
 
-    public void getTranscationtype(){
-        return transction_type;
+    public String getTranscationtype(){
+         return Transctiontype;
     }
 }
