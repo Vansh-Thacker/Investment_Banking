@@ -36,5 +36,7 @@ public class CashService {
         history.add(transaction);
     }
 
-
+    public void getTranscationtype(){
+        return transction_type;
+    }
 }
