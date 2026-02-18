@@ -53,7 +53,8 @@ public class CashController {
     }
     @GET("/transcations_type")
     public Object transcationsType() {
-        return service.getTranscationtype();
+        return service.
+                `getTranscationtype();
     }
 }
 
