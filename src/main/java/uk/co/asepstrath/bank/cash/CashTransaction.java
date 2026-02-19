@@ -3,7 +3,7 @@ import java.time.LocalDateTime;
 
 public class CashTransaction {
     public LocalDateTime timestamp;
-    public String type; // is it a deposit or a withdrawl
+    public String type; // is it a deposit or a withdrawl -- might want to change to int or some other datatype?
     public int amount;
     public int balanceAfter;
 }
