@@ -13,8 +13,8 @@ public class EvaluationService {
     }
 
     // get the total current value of all stocks
-    public double getPortfolioValue() {
-        double total = 0;
+    public int getPortfolioValue() {
+        int total = 0;
         
         // loop through every stock position
         for (Position position : investmentService.getPositions()) {
@@ -31,36 +31,45 @@ public class EvaluationService {
     }
 
     // get how much money we made or lost by calculating difference current value, and invested value
-    public double getStockStatus() {
-        double currentValue = getPortfolioValue();
-        double amountInvested = getTotalInvested();
-        double profitOrLoss = currentValue - amountInvested;
+    public int getStockStatus() {
+        int currentValue = getPortfolioValue();
+        int amountInvested = getTotalInvested();
+        int profitOrLoss = currentValue - amountInvested;
         return profitOrLoss;
     }
 
     // get the percentage return (gain or loss)
-    public double getReturnPercentage() {
-        double amountInvested = getTotalInvested();
+    public int getReturnPercentage() {
+        int amountInvested = getTotalInvested();
         
         // if we haven't invested anything, return 0%
         if (amountInvested == 0) {
             return 0;
         }
         
-        double profit = getStockStatus();
-        double percentage = (profit / amountInvested) * 100;
+        int profit = getStockStatus();
+        int percentage = (profit / amountInvested) * 100;
         return percentage;
     }
 
     // method to help add up all the money we spent on stocks
-    private double getTotalInvested() {
-        double total = 0;
+    private int getTotalInvested() {
+        int total = 0;
         
         for (Position position : investmentService.getPositions()) {
+            poundsToPence(position);
             total = total + position.totalInvested;
         }
         
         return total;
+    }
+
+    // method to convert pounds into pence
+    private int poundsToPence(Position stockToCovert) {
+        double pounds = stockToCovert.totalInvested;
+        int pence = (int) Math.round(pounds * 100);
+
+        return pence;
     }
 
 }
