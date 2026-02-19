@@ -25,9 +25,22 @@ public class InvestmentService {
     }
 
     public void sell(String ticker, int shares, double price) {
+        Scanner stockInput  = new Scanner (System.in);
+        //how many stocks investor wants to sell
+        int sellAmount = stockInput.nextInt();
+
+
         //check if you can sell that amount
+        while ( sellAmount < 0 || sellAmount > shares) {
+            System.out.println("Invalid sell amount");
+            sellAmount = stockInput.nextInt();
+        }
         // Add cash
+        // number of shares sold * price of stocks
+        int depositAmount = sellAmount * shares;
+        account.deposit(depositAmount);
         // Update position
+
         // Record transaction
     }
 
@@ -48,6 +61,10 @@ public class InvestmentService {
 
     public Collection<Position> getPositions() {
         return positions.values(); //get current stock holdings
+    }
+
+    public void updateBalance(int newBal){
+
     }
 
     public Position getPosition(String ticker) {

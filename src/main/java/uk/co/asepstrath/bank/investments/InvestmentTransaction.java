@@ -9,3 +9,4 @@ public class InvestmentTransaction {
     public int shares;
     public double price;
 }
+
