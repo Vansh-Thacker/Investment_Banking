@@ -15,13 +15,19 @@ import java.util.List;
 public class CashService {
     private final Account account;
     private final List<CashTransaction> history = new ArrayList<>();
-    private final String csv_path = "cashTransactionHistory.csv";
+    private final String csv_path;
 
-    // read csv file, put into history
+    //construvtor for tests
     public CashService(Account account) {
-        this.account = account; //store Account inside this.account so we can deposit withraw etc
+        this(account, "cashTransactionHistory.csv");
+    }
+    //constructor
+    public CashService(Account account, String csvPath) {
+        this.account = account;
+        this.csv_path = csvPath;
         loadHistoryFromCSV();
     }
+
     // load csv
     private void loadHistoryFromCSV() {
         try {
