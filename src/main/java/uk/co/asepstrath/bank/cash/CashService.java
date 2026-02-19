@@ -22,9 +22,7 @@ public class CashService {
         this.account = account; //store Account inside this.account so we can deposit withraw etc
         loadHistoryFromCSV();
     }
-        // -----------------------------
-    // LOAD CSV AT STARTUP
-    // -----------------------------
+    // load csv
     private void loadHistoryFromCSV() {
         try {
             Path path = Paths.get(csv_path);
@@ -119,6 +117,5 @@ public class CashService {
     public List<CashTransaction> getHistory() {
         return history;
     }
-
 
 }
