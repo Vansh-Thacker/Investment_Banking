@@ -110,9 +110,7 @@ public class CashService {
 
     }
 
-    public int getBalance() {
-        return account.getBalance();
-    }
+    public int getBalance() {return account.getBalance();}
 
     public List<CashTransaction> getHistory() {
         return history;
