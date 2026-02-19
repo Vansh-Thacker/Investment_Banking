@@ -4,6 +4,8 @@ import io.jooby.Cookie;
 import io.jooby.ServerOptions;
 import io.jooby.SessionStore;
 import io.jooby.netty.NettyServer;
+import uk.co.asepstrath.bank.cash.CashController;
+import uk.co.asepstrath.bank.evaluation.EvaluationController;
 import uk.co.asepstrath.bank.example.ExampleController;
 import io.jooby.Jooby;
 import io.jooby.handlebars.HandlebarsModule;
@@ -11,6 +13,7 @@ import io.jooby.helper.UniRestExtension;
 import io.jooby.hikari.HikariModule;
 import org.slf4j.Logger;
 import uk.co.asepstrath.bank.example.ExampleController_;
+import uk.co.asepstrath.bank.investments.InvestmentController;
 
 import javax.sql.DataSource;
 import java.sql.Connection;
@@ -42,10 +45,9 @@ public class App extends Jooby {
         DataSource ds = require(DataSource.class);
         Logger log = getLog();
 
-        mvc(new ExampleController_(ds,log));
-        mvc(new CashController_(ds, log, new Account())); // the new controllers
-        mvc(new InvestmentController_(ds, log));
-        mvc(new EvaluationController_(ds, log));
+        mvc(new CashController(ds, log, new Account())); // the new controllers
+        mvc(new InvestmentController(ds, log));
+        mvc(new EvaluationController(ds, log));
 
 
         /*
