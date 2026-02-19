@@ -32,10 +32,10 @@ public class App extends Jooby {
 
         setSessionStore(SessionStore.memory(Cookie.session("scotbank")));
 
-
-        //This will host any files in src/main/resources/assets on <host>/assets
-        //For example in the dice template (dice.hbs) it references "assets/dice.png" which is in resources/assets folder
-
+        /*
+        This will host any files in src/main/resources/assets on <host>/assets
+        For example in the dice template (dice.hbs) it references "assets/dice.png" which is in resources/assets folder
+         */
         assets("/assets/*", "/assets");
         assets("/service_worker.js","/service_worker.js");
 
@@ -45,9 +45,9 @@ public class App extends Jooby {
         DataSource ds = require(DataSource.class);
         Logger log = getLog();
 
-        mvc(new CashController(ds, log, new Account())); // the new controllers
-        //mvc(new InvestmentController(ds, log));
-        //mvc(new EvaluationController(ds, log));
+        /*mvc(new CashController(ds, log, new Account())); // the new controllers
+        mvc(new InvestmentController(ds, log));
+        mvc(new EvaluationController(ds, log));
 
 
         /*
