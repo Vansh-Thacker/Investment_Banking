@@ -1,3 +1,11 @@
+-- what have we completed --
+-   finishing the controllers 
+    -   finished cash transaction
+    -   finished the cash history
+    -   finished the csv file integration with the cash history
+    -   finished the tests for the cashTransaction class
+    -   finished the test for the cashService class 
+
 --currently working on --
     -   vansh and emmanuel are working on the HTML front end 
     -   finnishing the controllers 
@@ -11,5 +19,7 @@ Communication
 
 
 -- what to look out for -- 
-
-do not work on the same code as other teammates
+    -   do not work on the same code as other teammates
+    -   We need to make sure that when we are doing the UI things we try to use the code we have
+    currently done instead of processing things inside the controllers, this goes also goes for new
+    features we do not realise that we are missing, all the logic should go outside of the controllers
