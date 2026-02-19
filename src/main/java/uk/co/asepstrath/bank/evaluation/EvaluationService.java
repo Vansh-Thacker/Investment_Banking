@@ -57,19 +57,10 @@ public class EvaluationService {
         int total = 0;
         
         for (Position position : investmentService.getPositions()) {
-            poundsToPence(position);
             total = total + position.totalInvested;
         }
         
         return total;
-    }
-
-    // method to convert pounds into pence
-    private int poundsToPence(Position stockToCovert) {
-        double pounds = stockToCovert.totalInvested;
-        int pence = (int) Math.round(pounds * 100);
-
-        return pence;
     }
 
 }
