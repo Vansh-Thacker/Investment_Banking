@@ -1,11 +1,11 @@
 package uk.co.asepstrath.bank.cash;
+import io.jooby.annotation.*;
 import io.jooby.ModelAndView;
 import io.jooby.StatusCode;
 import io.jooby.annotation.*;
 import io.jooby.exception.StatusCodeException;
 import kong.unirest.core.ContentType;
 import kong.unirest.core.Unirest;
-import org.jetbrains.annotations.NotNull;
 import org.slf4j.Logger;
 
 import javax.sql.DataSource;
@@ -20,7 +20,7 @@ import uk.co.asepstrath.bank.Account;
 
 
 @Path("/cash")
-public class CashController {
+public class CashController{
 
     private final CashService service;
     private final Logger log;
@@ -31,13 +31,13 @@ public class CashController {
     }
 
     @POST("/deposit")
-    public Object deposit(@NotNull CashRequest amount) {
+    public Object deposit(CashRequest amount) {
         service.deposit(amount.amount);
         return service.getBalance();
     }
 
     @POST("/withdraw")
-    public Object withdraw(@NotNull CashRequest amount) {
+    public Object withdraw(CashRequest amount) {
         service.withdraw(amount.amount);
         return service.getBalance();
     }
@@ -49,12 +49,6 @@ public class CashController {
 
     @GET("/transactions")
     public Object transactions() {
-        return service.getHistory(); // Is this getting the transcation type?
-    }
-    @GET("/transcations_type")
-    public Object transcationsType() {
-        // Keeping this rn here to check the transcation types can change it later depending on our front end.
-        return service.getTranscationtype();
+        return service.getHistory();
     }
 }
-
