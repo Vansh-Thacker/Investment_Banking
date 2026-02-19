@@ -1,6 +1,9 @@
 package uk.co.asepstrath.bank;
 
 public class Account {
+    public Account() {
+
+    }
     private int balance = 0;
 
     public void deposit(int amount) {

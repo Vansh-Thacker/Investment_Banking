@@ -29,7 +29,6 @@ public class CashController{
         this.service = new CashService(account);
         this.log = log;
     }
-
     @POST("/deposit")
     public Object deposit(CashRequest amount) {
         service.deposit(amount.amount);
@@ -51,4 +50,16 @@ public class CashController{
     public Object transactions() {
         return service.getHistory();
     }
+
+    @GET("/cashsidefrontend")
+    public ModelAndView showDashboard() {
+        Map<String, Object> model = new HashMap<>();
+        // Use the service to get data for the frontend
+        model.put("balance", service.getBalance());
+        model.put("history", service.getHistory());
+
+        // This looks for src/main/resources/views/cash.hbs
+        return new ModelAndView("cash.hbs", model);
+    }
+
 }
