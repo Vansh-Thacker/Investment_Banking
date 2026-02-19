@@ -1,4 +1,5 @@
 package uk.co.asepstrath.bank.cash;
+import io.jooby.annotation.*;
 import io.jooby.ModelAndView;
 import io.jooby.StatusCode;
 import io.jooby.annotation.*;
@@ -19,7 +20,7 @@ import uk.co.asepstrath.bank.Account;
 
 
 @Path("/cash")
-public class CashController {
+public class CashController{
 
     private final CashService service;
     private final Logger log;
