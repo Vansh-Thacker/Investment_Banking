@@ -31,6 +31,11 @@ public class CashController{
         this.log = log;
     }
 
+    @GET
+    public void index(Context ctx) {
+        ctx.sendRedirect("/cash/cashsidefrontend");
+    }
+
 
 
     @POST("/deposit")
@@ -63,9 +68,6 @@ public class CashController{
         model.put("name", "Customer");        // or pull from session
         return new ModelAndView("cash.hbs", model);
     }
-    @GET
-    public void index(Context ctx) {
-        ctx.sendRedirect("/cash/cashsidefrontend");
-    }
+
 
 }
