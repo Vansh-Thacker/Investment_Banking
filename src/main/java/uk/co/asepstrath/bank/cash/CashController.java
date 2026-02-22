@@ -1,4 +1,5 @@
 package uk.co.asepstrath.bank.cash;
+import io.jooby.Context;
 import io.jooby.annotation.*;
 import io.jooby.ModelAndView;
 import io.jooby.StatusCode;
@@ -29,16 +30,19 @@ public class CashController{
         this.service = new CashService(account);
         this.log = log;
     }
+
+
+
     @POST("/deposit")
-    public Object deposit(CashRequest amount) {
+    public void deposit(CashRequest amount, Context ctx) {
         service.deposit(amount.amount);
-        return service.getBalance();
+        ctx.sendRedirect("/cash/cashsidefrontend");
     }
 
     @POST("/withdraw")
-    public Object withdraw(CashRequest amount) {
+    public void withdraw(CashRequest amount, Context ctx) {
         service.withdraw(amount.amount);
-        return service.getBalance();
+        ctx.sendRedirect("/cash/cashsidefrontend");
     }
 
     @GET("/balance")
@@ -52,14 +56,16 @@ public class CashController{
     }
 
     @GET("/cashsidefrontend")
-    public ModelAndView showDashboard() {
+    public ModelAndView showDashboard(Context ctx) {
         Map<String, Object> model = new HashMap<>();
-        // Use the service to get data for the frontend
         model.put("balance", service.getBalance());
         model.put("history", service.getHistory());
-
-        // This looks for src/main/resources/views/cash.hbs
+        model.put("name", "Customer");        // or pull from session
         return new ModelAndView("cash.hbs", model);
+    }
+    @GET
+    public void index(Context ctx) {
+        ctx.sendRedirect("/cash/cashsidefrontend");
     }
 
 }

@@ -15,6 +15,8 @@ import io.jooby.handlebars.HandlebarsModule;
 import io.jooby.helper.UniRestExtension;
 import io.jooby.hikari.HikariModule;
 import org.slf4j.Logger;
+import uk.co.asepstrath.bank.example.ExampleController_;
+
 import javax.sql.DataSource;
 import java.sql.Connection;
 import java.sql.SQLException;
@@ -72,6 +74,7 @@ public class App extends Jooby {
         // Fetch DB Source
         DataSource ds = require(DataSource.class);
         // Open Connection to DB
+        /*
         try (Connection connection = ds.getConnection()) {
             //
             Statement stmt = connection.createStatement();
@@ -80,6 +83,8 @@ public class App extends Jooby {
         } catch (SQLException e) {
             log.error("Database Creation Error",e);
         }
+
+         */
     }
 
     /*
