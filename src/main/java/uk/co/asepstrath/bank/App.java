@@ -4,7 +4,12 @@ import io.jooby.Cookie;
 import io.jooby.ServerOptions;
 import io.jooby.SessionStore;
 import io.jooby.netty.NettyServer;
-import uk.co.asepstrath.bank.example.ExampleController;
+import uk.co.asepstrath.bank.cash.CashController;
+import uk.co.asepstrath.bank.Account;
+import uk.co.asepstrath.bank.cash.CashController_;
+//import uk.co.asepstrath.bank.evaluation.EvaluationController;
+//import uk.co.asepstrath.bank.example.ExampleController;
+//import uk.co.asepstrath.bank.investments.InvestmentController;
 import io.jooby.Jooby;
 import io.jooby.handlebars.HandlebarsModule;
 import io.jooby.helper.UniRestExtension;
@@ -42,10 +47,9 @@ public class App extends Jooby {
         DataSource ds = require(DataSource.class);
         Logger log = getLog();
 
-        mvc(new ExampleController_(ds,log));
         mvc(new CashController_(ds, log, new Account())); // the new controllers
-        mvc(new InvestmentController_(ds, log));
-        mvc(new EvaluationController_(ds, log));
+        //mvc(new InvestmentController(ds, log));
+        //mvc(new EvaluationController(ds, log));
 
 
         /*
@@ -70,6 +74,7 @@ public class App extends Jooby {
         // Fetch DB Source
         DataSource ds = require(DataSource.class);
         // Open Connection to DB
+
         try (Connection connection = ds.getConnection()) {
             //
             Statement stmt = connection.createStatement();
@@ -78,6 +83,8 @@ public class App extends Jooby {
         } catch (SQLException e) {
             log.error("Database Creation Error",e);
         }
+
+
     }
 
     /*
