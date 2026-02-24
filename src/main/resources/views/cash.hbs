@@ -2,25 +2,119 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>SCOTBANK</title>
-    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.4.1/css/bootstrap.min.css"
-          integrity="sha384-Vkoo8x4CGsO3+Hhxv8T/Q5PaXtkKtu6ug5TOeNV6gBiFeWPGFN9MuhOf23Q9Ifjh" crossorigin="anonymous">
+    <link rel="stylesheet" href="../assets/style.css">
+    <title>Titan Invest | Terminal</title>
 </head>
 <body>
-<h1>{{name}} WELCOME TO SCOTBANK</h1>
-<div style="width: 128px; height: 128px; overflow: hidden;">
-    <img src="/assets/Dice.jpg" style="height: 128px; margin-left: calc({{random}} * -128px)">
-</div>
 
-<script src="https://code.jquery.com/jquery-3.4.1.slim.min.js"
-        integrity="sha384-J6qa4849blE2+poT4WnyKhv5vZF5SrPo0iEjwBvKU7imGFAV0wwj1yYfoRSJoZ+n"
-        crossorigin="anonymous"></script>
-<script src="https://cdn.jsdelivr.net/npm/popper.js@1.16.0/dist/umd/popper.min.js"
-        integrity="sha384-Q6E9RHvbIyZFJoft+2mJbHaEWldlvI9IOYy5n3zV9zzTtmI3UksdQRVvoxMfooAo"
-        crossorigin="anonymous"></script>
-<script src="https://stackpath.bootstrapcdn.com/bootstrap/4.4.1/js/bootstrap.min.js"
-        integrity="sha384-wfSDF2E50Y2D1uUdj0O3uMBJnjuUD4Ih7YwaYd1iqfktj0Uod8GCExl3Og8ifwB6"
-        crossorigin="anonymous"></script>
+{{!-- <header>
+    <h1>TITAN INVESTMENT BANK</h1>
+    <nav>
+        <ul>
+            <li><a href="#dashboard">Dashboard</a></li>
+            <li><a href="#portfolio">Portfolio</a></li>
+            <li><a href="#market">Market Data</a></li>
+            <li><a href="#transfer">Move Money</a></li>
+        </ul>
+    </nav>
+</header> --}}
+
+<hr>
+
+<section id="summary">
+    <h2>Account Summary: Alex Thompson</h2>
+    <p><strong>Total Net Worth:</strong> £124,500.00</p>
+    <p><strong>Cash Balance:</strong> £<span id="cash-balance">{{balance}}</span></p>
+
+    <div style="margin-top:8px;">
+        <form id="depositForm" action="/cash/deposit" method="get" style="display:inline-block;margin-right:8px;">
+            <input name="amount" id="amount-input" type="number" step="0.01" placeholder="Amount (pounds)" style="width:140px;padding:6px;" />
+            <button type="submit">Deposit</button>
+        </form>
+        <form id="withdrawForm" action="/cash/withdraw" method="get" style="display:inline-block;">
+            <input name="amount" id="withdraw-amount-input" type="number" step="0.01" placeholder="Amount (pounds)" style="width:140px;padding:6px;" />
+            <button type="submit">Withdraw</button>
+        </form>
+    </div>
+</section>
+
+<hr>
+
+<section id="portfolio">
+    <h3>Active Holdings</h3>
+    <table border="1">
+        <thead>
+        <tr>
+            <th>Ticker</th>
+            <th>Asset Name</th>
+            <th>Current Price</th>
+            <th>Quantity</th>
+            <th>Total Value</th>
+            <th>Action</th>
+        </tr>
+        </thead>
+        <tbody>
+        <tr>
+            <td>AAPL</td>
+            <td>Apple Inc.</td>
+            <td>$175.20</td>
+            <td>50</td>
+            <td>$8,760.00</td>
+            <td><button>Sell</button></td>
+        </tr>
+        <tr>
+            <td>BTC</td>
+            <td>Bitcoin</td>
+            <td>$64,120.00</td>
+            <td>0.45</td>
+            <td>$28,854.00</td>
+            <td><button>Sell</button></td>
+        </tr>
+        <tr>
+            <td>VOO</td>
+            <td>Vanguard S&P 500 ETF</td>
+            <td>$468.10</td>
+            <td>100</td>
+            <td>$46,810.00</td>
+            <td><button>Sell</button></td>
+        </tr>
+        </tbody>
+    </table>
+</section>
+
+<hr>
+
+<script>
+        // Convert displayed balance (assumed to be in pence) to pounds for user visibility.
+        document.addEventListener('DOMContentLoaded', function () {
+        const balanceEl = document.getElementById('cash-balance');
+        if (balanceEl) {
+                const raw = balanceEl.textContent && balanceEl.textContent.trim();
+                const pence = parseInt(raw || '0', 10) || 0;
+                balanceEl.textContent = (pence / 100).toFixed(2);
+        }
+        // Convert form GETs: multiply user-entered pounds to pence in the query param
+        const depositForm = document.getElementById('depositForm');
+        const withdrawForm = document.getElementById('withdrawForm');
+        if (depositForm) {
+                depositForm.addEventListener('submit', function (e) {
+                const input = document.getElementById('amount-input');
+                const val = parseFloat(input.value);
+                if (isNaN(val) || val <= 0) { e.preventDefault(); alert('Enter positive amount'); return; }
+                // set to pence integer
+                input.value = Math.round(val * 100);
+                });
+        }
+        if (withdrawForm) {
+                withdrawForm.addEventListener('submit', function (e) {
+                const input = document.getElementById('withdraw-amount-input');
+                const val = parseFloat(input.value);
+                if (isNaN(val) || val <= 0) { e.preventDefault(); alert('Enter positive amount'); return; }
+                input.value = Math.round(val * 100);
+                });
+        }
+        });
+</script>
 
 </body>
 </html>
