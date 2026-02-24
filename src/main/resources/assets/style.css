@@ -1,14 +1,14 @@
 /* --- Global Reset & Variables --- */
 :root {
-    --bg-deep: #0f172a;        /* Navy Background */
-    --bg-surface: #1e293b;     /* Card/Section Background */
-    --accent: #3b82f6;         /* Primary Action Blue */
+    --bg-deep: #0f172a;
+    --bg-surface: #1e293b;
+    --accent: #3b82f6;
     --accent-hover: #2563eb;
-    --text-primary: #f8fafc;   /* Off-white for readability */
-    --text-secondary: #94a3b8; /* Muted gray for labels */
-    --success: #10b981;        /* Emerald Green for gains */
-    --danger: #ef4444;         /* Red for losses/sell */
-    --border: #334155;         /* Thin borders for separation */
+    --text-primary: #f8fafc;
+    --text-secondary: #94a3b8;
+    --success: #10b981;
+    --danger: #ef4444;
+    --border: #334155;
 }
 
 * {
@@ -20,154 +20,109 @@ body {
     background-color: var(--bg-deep);
     color: var(--text-primary);
     margin: 0;
-    display: flex; /* Sidebar layout */
+    display: flex;
+    justify-content: center;
+    padding-top: 4rem;
     line-height: 1.6;
 }
 
-/* --- Layout Elements --- */
-header {
-    width: 250px;
-    height: 100vh;
-    background-color: #020617;
-    padding: 2rem 1.5rem;
-    position: fixed;
-    border-right: 1px solid var(--border);
-}
-
 main {
-    margin-left: 250px; /* Offset for sidebar */
-    padding: 3rem;
     width: 100%;
+    padding: 3rem;
 }
 
+/* Divider */
 hr {
     border: 0;
     border-top: 1px solid var(--border);
     margin: 2rem 0;
 }
 
-/* --- Navigation --- */
-header h1 {
-    font-size: 1.2rem;
-    letter-spacing: 1px;
-    color: var(--accent);
-    margin-bottom: 2.5rem;
-}
-
-nav ul {
-    list-style: none;
-    padding: 0;
-}
-
-nav li {
-    margin-bottom: 1rem;
-}
-
-nav a {
-    text-decoration: none;
-    color: var(--text-secondary);
-    font-weight: 500;
-    transition: color 0.2s;
-}
-
-nav a:hover {
-    color: var(--accent);
-}
-
-/* --- Dashboard Sections --- */
+/* --- Summary Card --- */
 section {
     background: var(--bg-surface);
-    padding: 1.5rem;
-    border-radius: 12px;
+    padding: 2rem;
+    border-radius: 14px;
     border: 1px solid var(--border);
 }
 
+.centered-summary {
+    width: 55%;
+    min-width: 420px;
+    margin: 0 auto;
+    margin-top: 10rem;
+    padding: 2.8rem;
+    text-align: center;
+    font-size: 1.15rem;
+}
+
+/* Headings */
 h2, h3 {
     margin-top: 0;
     color: var(--text-primary);
 }
 
-/* Account Summary Styling */
+/* Summary text */
 #summary p {
-    font-size: 1.1rem;
-    margin: 0.5rem 0;
+    font-size: 1.2rem;
+    margin: 0.7rem 0;
 }
 
 #summary strong {
     color: var(--text-secondary);
-    font-weight: 400;
+    font-weight: 500;
     margin-right: 10px;
 }
 
-/* --- Data Tables --- */
-table {
-    width: 100%;
-    border-collapse: collapse;
-    margin-top: 1rem;
-}
-
-th {
-    text-align: left;
-    color: var(--text-secondary);
-    font-size: 0.75rem;
-    text-transform: uppercase;
-    padding: 1rem;
-    border-bottom: 1px solid var(--border);
-}
-
-td {
-    padding: 1.2rem 1rem;
-    border-bottom: 1px solid var(--border);
-    font-size: 0.95rem;
-}
-
-tr:hover {
-    background-color: rgba(255, 255, 255, 0.02);
-}
-
 /* --- Forms & Buttons --- */
+.action-row {
+    margin-top: 1.8rem;
+    display: flex;
+    justify-content: center;
+    gap: 1rem;
+    flex-wrap: wrap;
+}
+
+input {
+    background: var(--bg-deep);
+    border: 1px solid var(--border);
+    color: white;
+    padding: 10px;
+    border-radius: 6px;
+    width: 170px;
+}
+
 button {
     background-color: var(--accent);
     color: white;
     border: none;
-    padding: 10px 20px;
+    padding: 10px 22px;
     border-radius: 6px;
     font-weight: 600;
     cursor: pointer;
     transition: background 0.2s;
-    margin-right: 10px;
 }
 
 button:hover {
     background-color: var(--accent-hover);
 }
 
-/* Specific button styling for Sell/Danger */
-#portfolio button {
-    background-color: transparent;
-    border: 1px solid var(--danger);
-    color: var(--danger);
-}
-
-#portfolio button:hover {
-    background-color: var(--danger);
-    color: white;
-}
-
-/* Trade Form Inputs */
-input, select {
-    background: var(--bg-deep);
-    border: 1px solid var(--border);
-    color: white;
-    padding: 10px;
-    border-radius: 6px;
-    margin-right: 15px;
-    margin-bottom: 10px;
-}
-
+/* Footer (if used later) */
 footer {
     text-align: center;
     color: var(--text-secondary);
     font-size: 0.8rem;
     padding: 2rem 0;
+}
+
+/* Remove number input arrows (Chrome, Edge, Safari, Opera) */
+input[type=number]::-webkit-inner-spin-button,
+input[type=number]::-webkit-outer-spin-button {
+    -webkit-appearance: none;
+    margin: 0;
+}
+
+/* Remove number input arrows (Firefox) */
+input[type=number] {
+    -moz-appearance: textfield;
 }
