@@ -38,6 +38,29 @@
     </div>
 </section>
 
+{{#if error}}
+<script>
+    (function(){
+        try {
+            // `error` is URL-encoded by the controller; decode and show native alert
+            var decoded = decodeURIComponent('{{error}}');
+            if (decoded) {
+                alert(decoded);
+                // remove the error query parameter so reloading the page doesn't re-show the alert
+                try {
+                    var url = new URL(window.location.href);
+                    url.searchParams.delete('error');
+                    var clean = url.pathname + (url.searchParams.toString() ? ('?' + url.searchParams.toString()) : '');
+                    history.replaceState(null, '', clean);
+                } catch (ex) { /* ignore */ }
+            }
+        } catch (e) {
+            try { alert('{{error}}'); } catch (e2) { /* ignore */ }
+        }
+    })();
+</script>
+{{/if}}
+
 <hr>
 
 <section id="portfolio">

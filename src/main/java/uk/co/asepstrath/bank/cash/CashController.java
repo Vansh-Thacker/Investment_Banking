@@ -47,8 +47,18 @@ public class CashController{
     // Simple GET endpoint to allow HTML forms / links to deposit
     @GET("/deposit")
     public void depositGet(@QueryParam("amount") int amount, Context ctx) {
-        service.deposit(amount);
-        ctx.sendRedirect("/cash/cashsidefrontend");
+        // try, catch to stop page from crashing due to errors
+        try {
+            service.deposit(amount);
+            ctx.sendRedirect("/cash/cashsidefrontend");
+        } catch (Exception e) {
+            try {
+                String msg = java.net.URLEncoder.encode(e.getMessage(), "UTF-8");
+                ctx.sendRedirect("/cash/cashsidefrontend?error=" + msg);
+            } catch (Exception ex) {
+                ctx.sendRedirect("/cash/cashsidefrontend?error=Unexpected+error");
+            }
+        }
     }
 
     @POST("/withdraw")
@@ -60,8 +70,18 @@ public class CashController{
     // Simple GET endpoint to allow HTML forms / links to withdraw
     @GET("/withdraw")
     public void withdrawGet(@QueryParam("amount") int amount, Context ctx) {
-        service.withdraw(amount);
-        ctx.sendRedirect("/cash/cashsidefrontend");
+        // try, catch to stop page from crashing due to errors
+        try {
+            service.withdraw(amount);
+            ctx.sendRedirect("/cash/cashsidefrontend");
+        } catch (Exception e) {
+            try {
+                String msg = java.net.URLEncoder.encode(e.getMessage(), "UTF-8");
+                ctx.sendRedirect("/cash/cashsidefrontend?error=" + msg);
+            } catch (Exception ex) {
+                ctx.sendRedirect("/cash/cashsidefrontend?error=Unexpected+error");
+            }
+        }
     }
 
     @GET("/balance")
@@ -80,6 +100,13 @@ public class CashController{
         model.put("balance", service.getBalance());
         model.put("history", service.getHistory());
         model.put("name", "Customer");        // or pull from session
+        // try, catch to stop page from crashing due to errors
+        try {
+            String err = ctx.query("error").value((String) null);
+            model.put("error", err);
+        } catch (Exception ignore) {
+            model.put("error", null);
+        }
         return new ModelAndView("cash.hbs", model);
     }
 
