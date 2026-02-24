@@ -5,34 +5,24 @@
     <link rel="stylesheet" href="../assets/style.css">
     <title>Titan Invest | Terminal</title>
 </head>
-<body>
 
-{{!-- <header>
-    <h1>TITAN INVESTMENT BANK</h1>
-    <nav>
-        <ul>
-            <li><a href="#dashboard">Dashboard</a></li>
-            <li><a href="#portfolio">Portfolio</a></li>
-            <li><a href="#market">Market Data</a></li>
-            <li><a href="#transfer">Move Money</a></li>
-        </ul>
-    </nav>
-</header> --}}
+
+<body>
 
 <hr>
 
-<section id="summary">
-    <h2>Account Summary: Alex Thompson</h2>
-    <p><strong>Total Net Worth:</strong> £124,500.00</p>
+<section id="summary" class="centered-summary">
+    <h2>Account Summary</h2>
     <p><strong>Cash Balance:</strong> £<span id="cash-balance">{{balance}}</span></p>
 
-    <div style="margin-top:8px;">
-        <form id="depositForm" action="/cash/deposit" method="get" style="display:inline-block;margin-right:8px;">
-            <input name="amount" id="amount-input" type="number" step="0.01" placeholder="Amount (pounds)" style="width:140px;padding:6px;" />
+    <div class="action-row">
+        <form id="depositForm" action="/cash/deposit" method="get">
+            <input name="amount" id="amount-input" type="number" step="0.01" placeholder="Amount (pounds)" />
             <button type="submit">Deposit</button>
         </form>
-        <form id="withdrawForm" action="/cash/withdraw" method="get" style="display:inline-block;">
-            <input name="amount" id="withdraw-amount-input" type="number" step="0.01" placeholder="Amount (pounds)" style="width:140px;padding:6px;" />
+
+        <form id="withdrawForm" action="/cash/withdraw" method="get">
+            <input name="amount" id="withdraw-amount-input" type="number" step="0.01" placeholder="Amount (pounds)" />
             <button type="submit">Withdraw</button>
         </form>
     </div>
@@ -42,20 +32,18 @@
 <script>
     (function(){
         try {
-            // `error` is URL-encoded by the controller; decode and show native alert
             var decoded = decodeURIComponent('{{error}}');
             if (decoded) {
                 alert(decoded);
-                // remove the error query parameter so reloading the page doesn't re-show the alert
                 try {
                     var url = new URL(window.location.href);
                     url.searchParams.delete('error');
                     var clean = url.pathname + (url.searchParams.toString() ? ('?' + url.searchParams.toString()) : '');
                     history.replaceState(null, '', clean);
-                } catch (ex) { /* ignore */ }
+                } catch (ex) { }
             }
         } catch (e) {
-            try { alert('{{error}}'); } catch (e2) { /* ignore */ }
+            try { alert('{{error}}'); } catch (e2) { }
         }
     })();
 </script>
@@ -63,80 +51,36 @@
 
 <hr>
 
-<section id="portfolio">
-    <h3>Active Holdings</h3>
-    <table border="1">
-        <thead>
-        <tr>
-            <th>Ticker</th>
-            <th>Asset Name</th>
-            <th>Current Price</th>
-            <th>Quantity</th>
-            <th>Total Value</th>
-            <th>Action</th>
-        </tr>
-        </thead>
-        <tbody>
-        <tr>
-            <td>AAPL</td>
-            <td>Apple Inc.</td>
-            <td>$175.20</td>
-            <td>50</td>
-            <td>$8,760.00</td>
-            <td><button>Sell</button></td>
-        </tr>
-        <tr>
-            <td>BTC</td>
-            <td>Bitcoin</td>
-            <td>$64,120.00</td>
-            <td>0.45</td>
-            <td>$28,854.00</td>
-            <td><button>Sell</button></td>
-        </tr>
-        <tr>
-            <td>VOO</td>
-            <td>Vanguard S&P 500 ETF</td>
-            <td>$468.10</td>
-            <td>100</td>
-            <td>$46,810.00</td>
-            <td><button>Sell</button></td>
-        </tr>
-        </tbody>
-    </table>
-</section>
-
-<hr>
-
 <script>
-        // Convert displayed balance (assumed to be in pence) to pounds for user visibility.
-        document.addEventListener('DOMContentLoaded', function () {
+    document.addEventListener('DOMContentLoaded', function () {
         const balanceEl = document.getElementById('cash-balance');
         if (balanceEl) {
-                const raw = balanceEl.textContent && balanceEl.textContent.trim();
-                const pence = parseInt(raw || '0', 10) || 0;
-                balanceEl.textContent = (pence / 100).toFixed(2);
+            const raw = balanceEl.textContent && balanceEl.textContent.trim();
+            const pence = parseInt(raw || '0', 10) || 0;
+            balanceEl.textContent = (pence / 100).toFixed(2);
         }
-        // Convert form GETs: multiply user-entered pounds to pence in the query param
+
         const depositForm = document.getElementById('depositForm');
         const withdrawForm = document.getElementById('withdrawForm');
+
         if (depositForm) {
-                depositForm.addEventListener('submit', function (e) {
+            depositForm.addEventListener('submit', function (e) {
                 const input = document.getElementById('amount-input');
                 const val = parseFloat(input.value);
                 if (isNaN(val) || val <= 0) { e.preventDefault(); alert('Enter positive amount'); return; }
-                // set to pence integer
                 input.value = Math.round(val * 100);
-                });
+            });
         }
+
         if (withdrawForm) {
-                withdrawForm.addEventListener('submit', function (e) {
+            withdrawForm.addEventListener('submit', function (e) {
                 const input = document.getElementById('withdraw-amount-input');
                 const val = parseFloat(input.value);
                 if (isNaN(val) || val <= 0) { e.preventDefault(); alert('Enter positive amount'); return; }
                 input.value = Math.round(val * 100);
-                });
+            });
         }
-        });
+    });
 </script>
 
 </body>
