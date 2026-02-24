@@ -44,7 +44,7 @@ public class CashController{
         ctx.sendRedirect("/cash/cashsidefrontend");
     }
 
-    // Simple GET endpoint to allow HTML forms / links to deposit using query param ?amount=123
+    // Simple GET endpoint to allow HTML forms / links to deposit
     @GET("/deposit")
     public void depositGet(@QueryParam("amount") int amount, Context ctx) {
         service.deposit(amount);
@@ -57,7 +57,7 @@ public class CashController{
         ctx.sendRedirect("/cash/cashsidefrontend");
     }
 
-    // Simple GET endpoint to allow HTML forms / links to withdraw using query param ?amount=123
+    // Simple GET endpoint to allow HTML forms / links to withdraw
     @GET("/withdraw")
     public void withdrawGet(@QueryParam("amount") int amount, Context ctx) {
         service.withdraw(amount);
