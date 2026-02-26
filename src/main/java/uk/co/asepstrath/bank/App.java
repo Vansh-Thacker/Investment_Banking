@@ -73,7 +73,7 @@ public class App extends Jooby {
 
         // Fetch DB Source
         DataSource ds = require(DataSource.class);
-        // Open Connection to DB
+        // Open Connection to DBgit
 
         try (Connection connection = ds.getConnection()) {
             //
