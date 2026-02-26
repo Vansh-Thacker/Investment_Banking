@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <link rel="stylesheet" href="../assets/style.css">
+    <link rel="stylesheet" >
     <title>Titan Invest | Terminal</title>
 </head>
 <body>
@@ -27,8 +27,15 @@
     <p><strong>Cash Balance:</strong> $12,040.50</p>
     <p><strong>Performance (YTD):</strong> +12.5%</p>
 
-    <button type="button">Deposit Funds</button>
-    <button type="button">Withdraw</button>
+    <form action="/cash/deposit" method="post">
+        <input type="number" name="amount">
+        <button type="submit">Deposit</button>
+    </form>
+
+    <form action="/cash/withdraw" method="post">
+        <input type="number" name="amount">
+        <button type="submit">Withdraw</button>
+    </form>
 </section>
 
 <hr>
