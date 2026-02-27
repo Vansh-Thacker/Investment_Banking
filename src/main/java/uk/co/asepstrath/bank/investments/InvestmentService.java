@@ -31,10 +31,10 @@ public class InvestmentService {
         record(TYPE_BUY, ticker, shares, price);
     }
 
-    /**
-     * Executes sale at confirmed price: decreases holdings, credits account, closes position if 0.
-     * Records transaction with timestamp, price and proceeds. Returns confirmation.
-     */
+    
+    // execute sale, decrease holdings, credit account, close position if 0
+    // record transaction with timestamp, price and proceeds. returns confirmation
+     
     public SellConfirmation sell(String ticker, int shares, double price) {
         if (shares <= 0 || price <= 0) {
             throw new IllegalArgumentException("Shares and price must be positive");
@@ -69,16 +69,16 @@ public class InvestmentService {
         return c;
     }
 
-    /**
-     * Returns sale details for the confirmation screen. No side effects; sale executes only when user calls sell().
-     */
+    
+    // return sale details for confirmation screen. sale executes when user calls sell()
+    
     public SalePreview getSalePreview(String ticker, int shares, double price) {
         if (shares <= 0 || price <= 0) {
             throw new IllegalArgumentException("Shares and price must be positive");
         }
         SalePreview p = new SalePreview();
         p.symbol = ticker;
-        p.name = ticker; // placeholder until stock name source is integrated
+        p.name = ticker; // placeholder until i integerate stock name source
         p.shares = shares;
         p.estimatedPricePerShare = price;
         p.estimatedTotalProceedsGbp = NumberFormat.getCurrencyInstance(Locale.UK).format(shares * price);
@@ -119,10 +119,9 @@ public class InvestmentService {
         return history; //returns buy and sell history
     }
 
-    /**
-     * Returns only BUY (purchase) transactions sorted by timestamp.
-     * @param sortOrder "asc" for oldest first, "desc" (or null) for newest first
-     */
+    // returns only BUY (purchase) transactions sorted by timestamp
+    // ascending = sortOrder "asc" for oldest first, null or desc for newest
+    
     public List<InvestmentTransaction> getPurchaseHistory(String sortOrder) {
         boolean ascending = "asc".equalsIgnoreCase(sortOrder);
         return history.stream()

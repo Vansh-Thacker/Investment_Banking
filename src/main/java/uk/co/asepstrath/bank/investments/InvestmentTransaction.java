@@ -10,10 +10,10 @@ public class InvestmentTransaction {
     public String ticker;
     public int shares;
     public double price;
-    /** Proceeds from a sale (shares * price). Set when type is SELL. */
+    // proceeds from a sale (shares * price) set when type is sell
     public double proceeds;
 
-    /** Total cost of this trade (shares * price) formatted in GBP for display. */
+    // total cost of trade (shares * price) formatted in gbp
     public String getTotalCostGbp() {
         if (shares <= 0 || price <= 0) {
             return NumberFormat.getCurrencyInstance(Locale.UK).format(0.0);
