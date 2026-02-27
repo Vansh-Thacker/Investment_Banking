@@ -44,7 +44,7 @@ public class App extends Jooby {
 
         mvc(new ExampleController_(ds,log));
         mvc(new CashController_(ds, log, new Account())); // the new controllers
-        mvc(new InvestmentController_(ds, log));
+        mvc(new InvestmentController_(ds, log, new Account()));
         mvc(new EvaluationController_(ds, log));
 
 

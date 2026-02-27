@@ -5,10 +5,14 @@ import uk.co.asepstrath.bank.Account;
 import java.io.BufferedReader;
 import java.io.InputStream;
 import java.io.InputStreamReader;
+import java.text.NumberFormat;
 import java.time.LocalDateTime;
 import java.util.*;
+import java.util.stream.Collectors;
 
 public class InvestmentService {
+
+    private static final String TYPE_BUY = "BUY";
 
     private final Account account;
     private final Map<String, Position> positions = new HashMap<>();
@@ -19,16 +23,66 @@ public class InvestmentService {
     }
 
     public void buy(String ticker, int shares, double price) {
+        if (shares <= 0 || price <= 0) {
+            throw new IllegalArgumentException("Shares and price must be positive");
+        }
         //Deduct cash
         //Update position
-        //Record transaction
+        record(TYPE_BUY, ticker, shares, price);
     }
 
-    public void sell(String ticker, int shares, double price) {
-        //check if you can sell that amount
-        // Add cash
-        // Update position
-        // Record transaction
+    /**
+     * Executes sale at confirmed price: decreases holdings, credits account, closes position if 0.
+     * Records transaction with timestamp, price and proceeds. Returns confirmation.
+     */
+    public SellConfirmation sell(String ticker, int shares, double price) {
+        if (shares <= 0 || price <= 0) {
+            throw new IllegalArgumentException("Shares and price must be positive");
+        }
+        Position position = positions.get(ticker);
+        if (position == null || position.shares < shares) {
+            throw new IllegalStateException("Insufficient holdings to sell " + shares + " shares of " + ticker);
+        }
+        double proceeds = shares * price;
+        record("SELL", ticker, shares, price, proceeds);
+        account.deposit((int) Math.round(proceeds));
+        position.shares -= shares;
+        if (position.shares == 0) {
+            positions.remove(ticker);
+        }
+        return buildSellConfirmation(ticker, shares, price);
+    }
+
+    private static SellConfirmation buildSellConfirmation(String ticker, int shares, double price) {
+        NumberFormat gbp = NumberFormat.getCurrencyInstance(Locale.UK);
+        double totalEarnings = shares * price;
+        SellConfirmation c = new SellConfirmation();
+        c.ticker = ticker;
+        c.shares = shares;
+        c.finalSalePrice = price;
+        c.finalSalePriceGbp = gbp.format(price);
+        c.totalEarningsGbp = gbp.format(totalEarnings);
+        c.successMessage = String.format("Sale successful. Sold %d shares of %s at %s for total earnings %s.",
+                shares, ticker, c.finalSalePriceGbp, c.totalEarningsGbp);
+        c.portfolioUrl = "/investments/positions";
+        c.transactionHistoryUrl = "/investments/transactions";
+        return c;
+    }
+
+    /**
+     * Returns sale details for the confirmation screen. No side effects; sale executes only when user calls sell().
+     */
+    public SalePreview getSalePreview(String ticker, int shares, double price) {
+        if (shares <= 0 || price <= 0) {
+            throw new IllegalArgumentException("Shares and price must be positive");
+        }
+        SalePreview p = new SalePreview();
+        p.symbol = ticker;
+        p.name = ticker; // placeholder until stock name source is integrated
+        p.shares = shares;
+        p.estimatedPricePerShare = price;
+        p.estimatedTotalProceedsGbp = NumberFormat.getCurrencyInstance(Locale.UK).format(shares * price);
+        return p;
     }
 
     public void importCsv(InputStream csvStream) {
@@ -36,13 +90,20 @@ public class InvestmentService {
     }
 
     private void record(String type, String ticker, int shares, double price) {
-        //save transaction to the history
+        record(type, ticker, shares, price, 0.0);
+    }
+
+    private void record(String type, String ticker, int shares, double price, double proceeds) {
+        if (shares <= 0 || price <= 0) {
+            throw new IllegalArgumentException("Shares and price must be positive");
+        }
         InvestmentTransaction invRecord = new InvestmentTransaction();
         invRecord.timestamp = LocalDateTime.now();
         invRecord.type = type;
         invRecord.ticker = ticker;
         invRecord.shares = shares;
         invRecord.price = price;
+        invRecord.proceeds = proceeds;
         history.add(invRecord);
     }
 
@@ -56,6 +117,20 @@ public class InvestmentService {
 
     public List<InvestmentTransaction> getHistory() {
         return history; //returns buy and sell history
+    }
+
+    /**
+     * Returns only BUY (purchase) transactions sorted by timestamp.
+     * @param sortOrder "asc" for oldest first, "desc" (or null) for newest first
+     */
+    public List<InvestmentTransaction> getPurchaseHistory(String sortOrder) {
+        boolean ascending = "asc".equalsIgnoreCase(sortOrder);
+        return history.stream()
+                .filter(tx -> TYPE_BUY.equals(tx.type))
+                .sorted(ascending
+                        ? Comparator.comparing(t -> t.timestamp)
+                        : Comparator.<InvestmentTransaction, LocalDateTime>comparing(t -> t.timestamp).reversed())
+                .collect(Collectors.toList());
     }
 }
 
