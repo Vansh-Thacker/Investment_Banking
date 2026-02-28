@@ -45,6 +45,16 @@ public class CashControllerTest {
         verify(ctx).sendRedirect("/cash/cashsidefrontend");
     }
 
-
+    @Test
+    void testDepositPostFailure() throws Exception { //does the deposit fail correctly
+        Account account = new Account();
+        CashController controller = newController(account);
+        Context ctx = mock(Context.class);
+        CashRequest req = new CashRequest();
+        req.amount = -10;
+        controller.deposit(req, ctx);
+        verify(ctx).sendRedirect(contains("error=Deposit+must+be+positive"));
+        assertEquals(0, account.getBalance());
+    }
 
 }
