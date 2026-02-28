@@ -61,13 +61,24 @@ public class CashControllerTest {
     void testDepositGetSuccess() throws Exception { //does the GET deposit work correctly
         Account account = new Account();
         CashController controller = newController(account);
+        Context ctx = mock(Context.class);
+        controller.depositGet(200, ctx);
+        assertEquals(200, account.getBalance());
+        verify(ctx).sendRedirect("/cash/cashsidefrontend");
+    }
+
+
+    @Test
+    void testDepositGetFailure() throws Exception { // does GET deposit validate input correctly
+        Account account = new Account();
+        CashController controller = newController(account);
 
         Context ctx = mock(Context.class);
 
-        controller.depositGet(200, ctx);
+        controller.depositGet(-5, ctx);
 
-        assertEquals(200, account.getBalance());
-        verify(ctx).sendRedirect("/cash/cashsidefrontend");
+        verify(ctx).sendRedirect(contains("error=Deposit+must+be+positive"));
+        assertEquals(0, account.getBalance());
     }
 
 }
