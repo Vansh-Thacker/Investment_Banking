@@ -2,23 +2,14 @@ package uk.co.asepstrath.bank.cash;
 import io.jooby.Context;
 import io.jooby.annotation.*;
 import io.jooby.ModelAndView;
-import io.jooby.StatusCode;
 import io.jooby.annotation.*;
-import io.jooby.exception.StatusCodeException;
-import kong.unirest.core.ContentType;
-import kong.unirest.core.Unirest;
 import org.slf4j.Logger;
 
 import javax.sql.DataSource;
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
-import java.sql.Connection;
-import java.sql.ResultSet;
-import java.sql.SQLException;
-import java.sql.Statement;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.Random;
 import uk.co.asepstrath.bank.Account;
 
 
@@ -105,14 +96,11 @@ public class CashController{
         Map<String, Object> model = new HashMap<>();
         model.put("balance", service.getBalance());
         model.put("history", service.getHistory());
-        model.put("name", "Customer");        // or pull from session
-        // try, catch to stop page from crashing due to errors
-        try {
-            String err = ctx.query("error").value((String) null);
-            model.put("error", err);
-        } catch (Exception ignore) {
-            model.put("error", null);
-        }
+        model.put("name", "Customer");
+
+        String error = ctx.query("error").value((String) null);
+        model.put("error", error);
+
         return new ModelAndView("cash.hbs", model);
     }
 
