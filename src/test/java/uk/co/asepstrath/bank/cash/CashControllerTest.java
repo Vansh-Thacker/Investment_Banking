@@ -127,4 +127,12 @@ public class CashControllerTest {
         assertEquals(100, account.getBalance());
     }
 
+    @Test
+    void testBalanceEndpoint() throws Exception { // does the balance endpoint return the correct integer
+        Account account = new Account();
+        account.deposit(1234);
+        CashController controller = newController(account);
+        assertEquals(1234, controller.balance());
+    }
+
 }
