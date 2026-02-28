@@ -105,4 +105,26 @@ public class CashControllerTest {
         assertEquals(100, account.getBalance());
     }
 
+    @Test
+    void testWithdrawGetSuccess() throws Exception { // does the GET withdrawal work correct
+        Account account = new Account();
+        account.deposit(500);
+        CashController controller = newController(account);
+        Context ctx = mock(Context.class);
+        controller.withdrawGet(200, ctx);
+        assertEquals(300, account.getBalance());
+        verify(ctx).sendRedirect("/cash/cashsidefrontend");
+    }
+
+    @Test
+    void testWithdrawGetFailure() throws Exception { //does get withdraw block invalid amounts
+        Account account = new Account();
+        account.deposit(100);
+        CashController controller = newController(account);
+        Context ctx = mock(Context.class);
+        controller.withdrawGet(500, ctx);
+        verify(ctx).sendRedirect(contains("error=Invalid+withdrawal+amount"));
+        assertEquals(100, account.getBalance());
+    }
+
 }
