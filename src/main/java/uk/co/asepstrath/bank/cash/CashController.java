@@ -10,6 +10,8 @@ import kong.unirest.core.Unirest;
 import org.slf4j.Logger;
 
 import javax.sql.DataSource;
+import java.net.URLEncoder;
+import java.nio.charset.StandardCharsets;
 import java.sql.Connection;
 import java.sql.ResultSet;
 import java.sql.SQLException;
@@ -39,9 +41,14 @@ public class CashController{
 
 
     @POST("/deposit")
-    public void deposit(CashRequest amount, Context ctx) {
-        service.deposit(amount.amount);
-        ctx.sendRedirect("/cash/cashsidefrontend");
+    public void deposit(CashRequest req, Context ctx) {
+        try {
+            service.deposit(req.amount);
+            ctx.sendRedirect("/cash/cashsidefrontend");
+        } catch (IllegalArgumentException e){
+            String msg = URLEncoder.encode(e.getMessage(), StandardCharsets.UTF_8);
+            ctx.sendRedirect("/cash/cashsidefrontend?error=" + msg);
+        }
     }
 
     // Simple GET endpoint to allow HTML forms / links to deposit
