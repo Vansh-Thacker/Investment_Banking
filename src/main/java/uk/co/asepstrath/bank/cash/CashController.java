@@ -80,19 +80,15 @@ public class CashController{
     // Simple GET endpoint to allow HTML forms / links to withdraw
     @GET("/withdraw")
     public void withdrawGet(@QueryParam("amount") int amount, Context ctx) {
-        // try, catch to stop page from crashing due to errors
         try {
             service.withdraw(amount);
             ctx.sendRedirect("/cash/cashsidefrontend");
-        } catch (Exception e) {
-            try {
-                String msg = java.net.URLEncoder.encode(e.getMessage(), "UTF-8");
-                ctx.sendRedirect("/cash/cashsidefrontend?error=" + msg);
-            } catch (Exception ex) {
-                ctx.sendRedirect("/cash/cashsidefrontend?error=Unexpected+error");
-            }
+        } catch (IllegalArgumentException e) {
+            String msg = URLEncoder.encode(e.getMessage(), StandardCharsets.UTF_8);
+            ctx.sendRedirect("/cash/cashsidefrontend?error=" + msg);
         }
     }
+
 
     @GET("/balance")
     public Object balance() {
