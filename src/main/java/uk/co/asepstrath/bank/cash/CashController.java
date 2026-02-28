@@ -19,11 +19,19 @@ public class CashController extends Jooby {
 
     private final CashService service;
     private final Logger log;
+    private final Account account;
 
     public CashController(Logger log, Account account) {
-        this.service = new CashService(account);
-        this.log = log;
+        this(log, account, new CashService(account));
     }
+
+    // Test constructor (inject custom CashService)
+    public CashController(Logger log, Account account, CashService service) {
+        this.log = log;
+        this.account = account;
+        this.service = service;
+    }
+
 
     @GET
     public void index(Context ctx) {

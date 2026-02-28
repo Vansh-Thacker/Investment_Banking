@@ -7,32 +7,44 @@ import org.mockito.Mockito;
 import org.slf4j.Logger;
 import uk.co.asepstrath.bank.Account;
 
+import java.nio.file.Files;
+import java.nio.file.Path;
+
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
 
+
 public class CashControllerTest {
-    private CashController newController(Account account) {
+    private CashController newController(Account account) throws Exception {
         Logger log = Mockito.mock(Logger.class);
-        return new CashController(log, account);
+
+        Path temp = Files.createTempFile("cash", ".csv");
+        CashService service = new CashService(account, temp.toString());
+
+        return new CashController(log, account, service);
     }
+
     @Test
-    void testIndexRedirect() { // does the /cash path behave correctly
+    void testIndexRedirect() throws Exception { // does the /cash route work right
         Account account = new Account();
         CashController controller = newController(account);
         Context ctx = mock(Context.class);
         controller.index(ctx);
         verify(ctx).sendRedirect("/cash/cashsidefrontend");
     }
-        @Test
-        void testDepositPostSuccess() {
-            Account account = new Account();
-            CashController controller = newController(account);
-            Context ctx = mock(Context.class);
-            CashRequest req = new CashRequest();
-            req.amount = 500;
-            controller.deposit(req, ctx);
-            assertEquals(500, account.getBalance());
-            verify(ctx).sendRedirect("/cash/cashsidefrontend");
-        }
+
+    @Test
+    void testDepositPostSuccess() throws Exception { // does the POST endpoint work correct
+        Account account = new Account();
+        CashController controller = newController(account);
+        Context ctx = mock(Context.class);
+        CashRequest req = new CashRequest();
+        req.amount = 500;
+        controller.deposit(req, ctx);
+        assertEquals(500, account.getBalance());
+        verify(ctx).sendRedirect("/cash/cashsidefrontend");
+    }
+
+
 
 }
