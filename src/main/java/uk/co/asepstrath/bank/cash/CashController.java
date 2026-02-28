@@ -58,14 +58,11 @@ public class CashController{
         try {
             service.deposit(amount);
             ctx.sendRedirect("/cash/cashsidefrontend");
-        } catch (Exception e) {
-            try {
-                String msg = java.net.URLEncoder.encode(e.getMessage(), "UTF-8");
-                ctx.sendRedirect("/cash/cashsidefrontend?error=" + msg);
-            } catch (Exception ex) {
-                ctx.sendRedirect("/cash/cashsidefrontend?error=Unexpected+error");
-            }
+        } catch (IllegalArgumentException e) {
+            String msg = URLEncoder.encode(e.getMessage(), StandardCharsets.UTF_8);
+            ctx.sendRedirect("/cash/cashsidefrontend?error=" + msg);
         }
+
     }
 
     @POST("/withdraw")
