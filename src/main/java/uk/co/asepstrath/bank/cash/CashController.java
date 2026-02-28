@@ -1,5 +1,6 @@
 package uk.co.asepstrath.bank.cash;
 import io.jooby.Context;
+import io.jooby.Jooby;
 import io.jooby.annotation.*;
 import io.jooby.ModelAndView;
 import io.jooby.annotation.*;
@@ -14,12 +15,12 @@ import uk.co.asepstrath.bank.Account;
 
 
 @Path("/cash")
-public class CashController{
+public class CashController extends Jooby {
 
     private final CashService service;
     private final Logger log;
 
-    public CashController(DataSource ds, Logger log, Account account) {
+    public CashController(Logger log, Account account) {
         this.service = new CashService(account);
         this.log = log;
     }
