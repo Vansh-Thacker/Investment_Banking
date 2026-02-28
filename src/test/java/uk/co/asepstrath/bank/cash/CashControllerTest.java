@@ -2,6 +2,7 @@ package uk.co.asepstrath.bank.cash;
 
 import io.jooby.Context;
 import io.jooby.ModelAndView;
+import io.jooby.value.Value;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
 import org.slf4j.Logger;
@@ -10,6 +11,7 @@ import uk.co.asepstrath.bank.Account;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.List;
+import java.util.Map;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
@@ -147,7 +149,23 @@ public class CashControllerTest {
         assertTrue(result instanceof List<?>);
     }
 
-
+    @Test
+    void testDashboardModel() throws Exception {
+        Account account = new Account();
+        CashController controller = newController(account);
+        controller.getService().deposit(500);
+        Context ctx = mock(Context.class);
+        Value value = mock(Value.class);
+        when(ctx.query("error")).thenReturn(value);
+        when(value.value((String) null)).thenReturn(null);
+        ModelAndView mv = controller.showDashboard(ctx);
+        assertEquals("cash.hbs", mv.getView());
+        Map<String, Object> model = (Map<String, Object>) mv.getModel();
+        assertTrue(model.containsKey("balance"));
+        assertTrue(model.containsKey("history"));
+        assertTrue(model.containsKey("name"));
+        assertTrue(model.containsKey("error"));
+    }
 
 
 }
