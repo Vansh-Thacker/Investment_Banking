@@ -57,4 +57,17 @@ public class CashControllerTest {
         assertEquals(0, account.getBalance());
     }
 
+    @Test
+    void testDepositGetSuccess() throws Exception { //does the GET deposit work correctly
+        Account account = new Account();
+        CashController controller = newController(account);
+
+        Context ctx = mock(Context.class);
+
+        controller.depositGet(200, ctx);
+
+        assertEquals(200, account.getBalance());
+        verify(ctx).sendRedirect("/cash/cashsidefrontend");
+    }
+
 }
