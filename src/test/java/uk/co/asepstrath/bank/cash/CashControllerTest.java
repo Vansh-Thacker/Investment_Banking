@@ -9,6 +9,7 @@ import uk.co.asepstrath.bank.Account;
 
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
@@ -134,5 +135,19 @@ public class CashControllerTest {
         CashController controller = newController(account);
         assertEquals(1234, controller.balance());
     }
+
+    @Test
+    void testTransactionsEndpoint() throws Exception {
+        Account account = new Account();
+        CashController controller = newController(account);
+        controller.getService().deposit(100);
+        controller.getService().withdraw(50);
+        Object result = controller.transactions();
+        assertNotNull(result);
+        assertTrue(result instanceof List<?>);
+    }
+
+
+
 
 }

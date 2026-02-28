@@ -32,6 +32,9 @@ public class CashController extends Jooby {
         this.service = service;
     }
 
+    public CashService getService() {
+        return service;
+    }
 
     @GET
     public void index(Context ctx) {
