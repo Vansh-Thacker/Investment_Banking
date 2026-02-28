@@ -6,7 +6,6 @@ import io.jooby.ModelAndView;
 import io.jooby.annotation.*;
 import org.slf4j.Logger;
 
-import javax.sql.DataSource;
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
 import java.util.HashMap;
@@ -18,8 +17,6 @@ import uk.co.asepstrath.bank.Account;
 public class CashController extends Jooby {
 
     private final CashService service;
-    private final Logger log;
-    private final Account account;
 
     public CashController(Logger log, Account account) {
         this(log, account, new CashService(account));
@@ -27,8 +24,6 @@ public class CashController extends Jooby {
 
     // Test constructor (inject custom CashService)
     public CashController(Logger log, Account account, CashService service) {
-        this.log = log;
-        this.account = account;
         this.service = service;
     }
 
