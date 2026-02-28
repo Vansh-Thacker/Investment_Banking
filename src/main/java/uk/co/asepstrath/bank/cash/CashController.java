@@ -66,9 +66,15 @@ public class CashController{
     }
 
     @POST("/withdraw")
-    public void withdraw(CashRequest amount, Context ctx) {
-        service.withdraw(amount.amount);
-        ctx.sendRedirect("/cash/cashsidefrontend");
+    public void withdraw(CashRequest req, Context ctx) {
+        try {
+            service.withdraw(req.amount);
+            ctx.sendRedirect("/cash/cashsidefrontend");
+        } catch (IllegalArgumentException e) {
+            String msg = URLEncoder.encode(e.getMessage(), StandardCharsets.UTF_8);
+            ctx.sendRedirect("/cash/cashsidefrontend?error=" + msg);
+        }
+
     }
 
     // Simple GET endpoint to allow HTML forms / links to withdraw
