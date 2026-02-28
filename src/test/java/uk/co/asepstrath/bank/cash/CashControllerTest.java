@@ -23,5 +23,16 @@ public class CashControllerTest {
         controller.index(ctx);
         verify(ctx).sendRedirect("/cash/cashsidefrontend");
     }
+        @Test
+        void testDepositPostSuccess() {
+            Account account = new Account();
+            CashController controller = newController(account);
+            Context ctx = mock(Context.class);
+            CashRequest req = new CashRequest();
+            req.amount = 500;
+            controller.deposit(req, ctx);
+            assertEquals(500, account.getBalance());
+            verify(ctx).sendRedirect("/cash/cashsidefrontend");
+        }
 
 }
