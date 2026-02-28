@@ -91,4 +91,18 @@ public class CashControllerTest {
         verify(ctx).sendRedirect("/cash/cashsidefrontend");
     }
 
+
+    @Test
+    void testWithdrawPostFailure() throws Exception { // is overdraft blocked
+        Account account = new Account();
+        account.deposit(100);
+        CashController controller = newController(account);
+        Context ctx = mock(Context.class);
+        CashRequest req = new CashRequest();
+        req.amount = 500;
+        controller.withdraw(req, ctx);
+        verify(ctx).sendRedirect(contains("error=Invalid+withdrawal+amount"));
+        assertEquals(100, account.getBalance());
+    }
+
 }
