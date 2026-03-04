@@ -111,4 +111,39 @@ public class CashController{
     }
 
 
+    
+    // Used cash controller to implement login and signup page for now
+    @GET("/login")
+    public ModelAndView showLogin(Context ctx) {
+        Map<String, Object> model = new HashMap<>();
+        model.put("balance", service.getBalance());
+        model.put("history", service.getHistory());
+        model.put("name", "Customer");        // or pull from session
+        // try, catch to stop page from crashing due to errors
+        try {
+            String err = ctx.query("error").value((String) null);
+            model.put("error", err);
+        } catch (Exception ignore) {
+            model.put("error", null);
+        }
+        return new ModelAndView("login.hbs", model);
+    }
+
+    @GET("/signin")
+    public ModelAndView showSignin(Context ctx) {
+        Map<String, Object> model = new HashMap<>();
+        model.put("balance", service.getBalance());
+        model.put("history", service.getHistory());
+        model.put("name", "Customer");        // or pull from session
+        // try, catch to stop page from crashing due to errors
+        try {
+            String err = ctx.query("error").value((String) null);
+            model.put("error", err);
+        } catch (Exception ignore) {
+            model.put("error", null);
+        }
+        return new ModelAndView("signin.hbs", model);
+    }
+
+
 }

@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <link rel="stylesheet" href="../assets/style.css">
+    <link rel="stylesheet" href="../assets/auth.css">
+    <title>Login</title>
+</head>
+<body class="auth-page">
+<nav class="top-nav">
+    <a href="signin">Sign up</a>
+    <a href="cashsidefrontend">Dashboard</a>
+</nav>
+<section id="login" class="auth-form">
+    <h2>Login</h2>
+    <form id="loginForm">
+        <div>
+            <label for="login-username">Username</label>
+            <input type="text" id="login-username" name="username" required />
+        </div>
+        <div>
+            <label for="login-password">Password</label>
+            <input type="password" id="login-password" name="password" required />
+        </div>
+        <button type="submit">Log In</button>
+    </form>
+    <p>Don't have an account? <a href="signin">Sign up here</a>.</p>
+</section>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function () {
+        const form = document.getElementById('loginForm');
+        if (form) {
+            form.addEventListener('submit', function (e) {
+                e.preventDefault();
+                alert('Login button pressed');
+            });
+        }
+    });
+</script>
+</body>
+</html>
