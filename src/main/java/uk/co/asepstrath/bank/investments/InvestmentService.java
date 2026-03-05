@@ -1,7 +1,6 @@
 package uk.co.asepstrath.bank.investments;
 
 import uk.co.asepstrath.bank.Account;
-
 import java.io.BufferedReader;
 import java.io.InputStream;
 import java.io.InputStreamReader;
