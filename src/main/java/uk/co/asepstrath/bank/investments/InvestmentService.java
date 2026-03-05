@@ -1,5 +1,7 @@
 package uk.co.asepstrath.bank.investments;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import uk.co.asepstrath.bank.Account;
 
 import java.io.BufferedReader;
@@ -12,6 +14,7 @@ import java.util.stream.Collectors;
 
 public class InvestmentService {
 
+    private static final Logger log = LoggerFactory.getLogger(InvestmentService.class);
     private static final String TYPE_BUY = "BUY";
 
     private final Account account;
@@ -40,14 +43,23 @@ public class InvestmentService {
             throw new IllegalArgumentException("Shares and price must be positive");
         }
         Position position = positions.get(ticker);
+        int held = position == null ? 0 : position.shares;
         if (position == null || position.shares < shares) {
-            throw new IllegalStateException("Insufficient holdings to sell " + shares + " shares of " + ticker);
+            log.error("Validation: insufficient shares for SELL {} - held {}, requested {}. Processing transaction anyway (historical data).", ticker, held, shares);
         }
         double proceeds = shares * price;
         record("SELL", ticker, shares, price, proceeds);
         account.deposit((int) Math.round(proceeds));
+        if (position == null) {
+            position = new Position();
+            position.ticker = ticker;
+            position.shares = 0;
+            position.averageBookPrice = 0;
+            position.totalInvested = 0;
+            positions.put(ticker, position);
+        }
         position.shares -= shares;
-        if (position.shares == 0) {
+        if (position.shares <= 0) {
             positions.remove(ticker);
         }
         return buildSellConfirmation(ticker, shares, price);

@@ -293,9 +293,22 @@ public class InvestmentServiceTests {
     }
 
     @Test
-    public void attemptingToSellMoreThanHeldThrows() {
+    public void sellWithInsufficientHoldingsProcessesAnyway() {
+        account.deposit(5000);
         service.buy("AAPL", 2, 100.0);
-        assertThrows(IllegalStateException.class, () -> service.sell("AAPL", 5, 105.0));
+        int balanceBefore = account.getBalance();
+
+        SellConfirmation confirmation = service.sell("AAPL", 5, 105.0);
+
+        assertNotNull(confirmation);
+        assertEquals(5, confirmation.shares);
+        assertEquals(105.0, confirmation.finalSalePrice);
+        assertEquals(balanceBefore + (int) Math.round(5 * 105.0), account.getBalance());
+        List<InvestmentTransaction> history = service.getHistory();
+        InvestmentTransaction last = history.get(history.size() - 1);
+        assertEquals("SELL", last.type);
+        assertEquals(5, last.shares);
+        assertNull(service.getPosition("AAPL"));
     }
 
 }

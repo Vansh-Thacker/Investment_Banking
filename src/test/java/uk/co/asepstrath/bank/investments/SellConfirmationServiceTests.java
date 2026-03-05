@@ -307,15 +307,29 @@ public class SellConfirmationServiceTests {
     }
 
     @Test
-    public void sellThrowsExceptionWhenInsfficientHoldings() {
+    public void sellWithInsufficientHoldingsProcessesAnyway() {
         service.buy("AAPL", 10, 150.0);
+        int balanceBefore = account.getBalance();
 
-        assertThrows(IllegalStateException.class, () -> service.sell("AAPL", 20, 155.0));
+        SellConfirmation confirmation = service.sell("AAPL", 20, 155.0);
+
+        assertNotNull(confirmation);
+        assertEquals(20, confirmation.shares);
+        assertEquals(155.0, confirmation.finalSalePrice);
+        assertEquals(balanceBefore + (int) Math.round(20 * 155.0), account.getBalance());
+        assertNull(service.getPosition("AAPL"));
     }
 
     @Test
-    public void sellThrowsExceptionForNonExistentStock() {
-        assertThrows(IllegalStateException.class, () -> service.sell("NONEXIST", 10, 150.0));
+    public void sellForNonExistentStockProcessesAnyway() {
+        int balanceBefore = account.getBalance();
+
+        SellConfirmation confirmation = service.sell("NONEXIST", 10, 150.0);
+
+        assertNotNull(confirmation);
+        assertEquals("NONEXIST", confirmation.ticker);
+        assertEquals(10, confirmation.shares);
+        assertEquals(balanceBefore + (int) Math.round(10 * 150.0), account.getBalance());
     }
 
 }
