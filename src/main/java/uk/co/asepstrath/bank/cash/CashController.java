@@ -1,34 +1,34 @@
 package uk.co.asepstrath.bank.cash;
 import io.jooby.Context;
+import io.jooby.Jooby;
 import io.jooby.annotation.*;
 import io.jooby.ModelAndView;
-import io.jooby.StatusCode;
 import io.jooby.annotation.*;
-import io.jooby.exception.StatusCodeException;
-import kong.unirest.core.ContentType;
-import kong.unirest.core.Unirest;
 import org.slf4j.Logger;
 
-import javax.sql.DataSource;
-import java.sql.Connection;
-import java.sql.ResultSet;
-import java.sql.SQLException;
-import java.sql.Statement;
+import java.net.URLEncoder;
+import java.nio.charset.StandardCharsets;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.Random;
 import uk.co.asepstrath.bank.Account;
 
 
 @Path("/cash")
-public class CashController{
+public class CashController extends Jooby {
 
     private final CashService service;
-    private final Logger log;
 
-    public CashController(DataSource ds, Logger log, Account account) {
-        this.service = new CashService(account);
-        this.log = log;
+    public CashController(Logger log, Account account) {
+        this(log, account, new CashService(account));
+    }
+
+    // Test constructor (inject custom CashService)
+    public CashController(Logger log, Account account, CashService service) {
+        this.service = service;
+    }
+
+    public CashService getService() {
+        return service;
     }
 
     @GET
@@ -39,9 +39,14 @@ public class CashController{
 
 
     @POST("/deposit")
-    public void deposit(CashRequest amount, Context ctx) {
-        service.deposit(amount.amount);
-        ctx.sendRedirect("/cash/cashsidefrontend");
+    public void deposit(CashRequest req, Context ctx) {
+        try {
+            service.deposit(req.amount);
+            ctx.sendRedirect("/cash/cashsidefrontend");
+        } catch (IllegalArgumentException e){
+            String msg = URLEncoder.encode(e.getMessage(), StandardCharsets.UTF_8);
+            ctx.sendRedirect("/cash/cashsidefrontend?error=" + msg);
+        }
     }
 
     // Simple GET endpoint to allow HTML forms / links to deposit
@@ -51,38 +56,37 @@ public class CashController{
         try {
             service.deposit(amount);
             ctx.sendRedirect("/cash/cashsidefrontend");
-        } catch (Exception e) {
-            try {
-                String msg = java.net.URLEncoder.encode(e.getMessage(), "UTF-8");
-                ctx.sendRedirect("/cash/cashsidefrontend?error=" + msg);
-            } catch (Exception ex) {
-                ctx.sendRedirect("/cash/cashsidefrontend?error=Unexpected+error");
-            }
+        } catch (IllegalArgumentException e) {
+            String msg = URLEncoder.encode(e.getMessage(), StandardCharsets.UTF_8);
+            ctx.sendRedirect("/cash/cashsidefrontend?error=" + msg);
         }
+
     }
 
     @POST("/withdraw")
-    public void withdraw(CashRequest amount, Context ctx) {
-        service.withdraw(amount.amount);
-        ctx.sendRedirect("/cash/cashsidefrontend");
+    public void withdraw(CashRequest req, Context ctx) {
+        try {
+            service.withdraw(req.amount);
+            ctx.sendRedirect("/cash/cashsidefrontend");
+        } catch (IllegalArgumentException e) {
+            String msg = URLEncoder.encode(e.getMessage(), StandardCharsets.UTF_8);
+            ctx.sendRedirect("/cash/cashsidefrontend?error=" + msg);
+        }
+
     }
 
     // Simple GET endpoint to allow HTML forms / links to withdraw
     @GET("/withdraw")
     public void withdrawGet(@QueryParam("amount") int amount, Context ctx) {
-        // try, catch to stop page from crashing due to errors
         try {
             service.withdraw(amount);
             ctx.sendRedirect("/cash/cashsidefrontend");
-        } catch (Exception e) {
-            try {
-                String msg = java.net.URLEncoder.encode(e.getMessage(), "UTF-8");
-                ctx.sendRedirect("/cash/cashsidefrontend?error=" + msg);
-            } catch (Exception ex) {
-                ctx.sendRedirect("/cash/cashsidefrontend?error=Unexpected+error");
-            }
+        } catch (IllegalArgumentException e) {
+            String msg = URLEncoder.encode(e.getMessage(), StandardCharsets.UTF_8);
+            ctx.sendRedirect("/cash/cashsidefrontend?error=" + msg);
         }
     }
+
 
     @GET("/balance")
     public Object balance() {
@@ -99,33 +103,25 @@ public class CashController{
         Map<String, Object> model = new HashMap<>();
         model.put("balance", service.getBalance());
         model.put("history", service.getHistory());
-        model.put("name", "Customer");        // or pull from session
-        // try, catch to stop page from crashing due to errors
-        try {
-            String err = ctx.query("error").value((String) null);
-            model.put("error", err);
-        } catch (Exception ignore) {
-            model.put("error", null);
-        }
+        model.put("name", "Customer");
+
+        String error = ctx.query("error").value((String) null);
+        model.put("error", error);
+
         return new ModelAndView("cash.hbs", model);
     }
 
-
-    
     // Used cash controller to implement login and signup page for now
     @GET("/login")
     public ModelAndView showLogin(Context ctx) {
         Map<String, Object> model = new HashMap<>();
         model.put("balance", service.getBalance());
         model.put("history", service.getHistory());
-        model.put("name", "Customer");        // or pull from session
-        // try, catch to stop page from crashing due to errors
-        try {
-            String err = ctx.query("error").value((String) null);
-            model.put("error", err);
-        } catch (Exception ignore) {
-            model.put("error", null);
-        }
+        model.put("name", "Customer");
+
+        String error = ctx.query("error").value((String) null);
+        model.put("error", error);
+
         return new ModelAndView("login.hbs", model);
     }
 
@@ -134,16 +130,12 @@ public class CashController{
         Map<String, Object> model = new HashMap<>();
         model.put("balance", service.getBalance());
         model.put("history", service.getHistory());
-        model.put("name", "Customer");        // or pull from session
-        // try, catch to stop page from crashing due to errors
-        try {
-            String err = ctx.query("error").value((String) null);
-            model.put("error", err);
-        } catch (Exception ignore) {
-            model.put("error", null);
-        }
+        model.put("name", "Customer");
+
+        String error = ctx.query("error").value((String) null);
+        model.put("error", error);
+
         return new ModelAndView("signin.hbs", model);
     }
-
-
 }
+
