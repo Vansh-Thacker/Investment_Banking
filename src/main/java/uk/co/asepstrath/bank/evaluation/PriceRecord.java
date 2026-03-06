@@ -2,7 +2,7 @@ package uk.co.asepstrath.bank.evaluation;
 
 public class PriceRecord {
     public String ticker;
-    public double price;
+    public int price;
     public String date;
 }
 

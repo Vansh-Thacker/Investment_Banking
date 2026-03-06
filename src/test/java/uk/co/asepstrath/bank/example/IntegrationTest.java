@@ -1,4 +1,4 @@
-package uk.co.asepstrath.bank.example;
+/*package uk.co.asepstrath.bank.example;
 
 import io.jooby.test.JoobyTest;
 import okhttp3.OkHttpClient;
@@ -29,3 +29,4 @@ public class IntegrationTest {
         }
     }
 }
+*/

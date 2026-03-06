@@ -1,0 +1,128 @@
+/* --- Global Reset & Variables --- */
+:root {
+    --bg-deep: #0f172a;
+    --bg-surface: #1e293b;
+    --accent: #3b82f6;
+    --accent-hover: #2563eb;
+    --text-primary: #f8fafc;
+    --text-secondary: #94a3b8;
+    --success: #10b981;
+    --danger: #ef4444;
+    --border: #334155;
+}
+
+* {
+    box-sizing: border-box;
+}
+
+body {
+    font-family: 'Inter', -apple-system, sans-serif;
+    background-color: var(--bg-deep);
+    color: var(--text-primary);
+    margin: 0;
+    display: flex;
+    justify-content: center;
+    padding-top: 4rem;
+    line-height: 1.6;
+}
+
+main {
+    width: 100%;
+    padding: 3rem;
+}
+
+/* Divider */
+hr {
+    border: 0;
+    border-top: 1px solid var(--border);
+    margin: 2rem 0;
+}
+
+/* --- Summary Card --- */
+section {
+    background: var(--bg-surface);
+    padding: 2rem;
+    border-radius: 14px;
+    border: 1px solid var(--border);
+}
+
+.centered-summary {
+    width: 55%;
+    min-width: 420px;
+    margin: 0 auto;
+    margin-top: 10rem;
+    padding: 2.8rem;
+    text-align: center;
+    font-size: 1.15rem;
+}
+
+/* Headings */
+h2, h3 {
+    margin-top: 0;
+    color: var(--text-primary);
+}
+
+/* Summary text */
+#summary p {
+    font-size: 1.2rem;
+    margin: 0.7rem 0;
+}
+
+#summary strong {
+    color: var(--text-secondary);
+    font-weight: 500;
+    margin-right: 10px;
+}
+
+/* --- Forms & Buttons --- */
+.action-row {
+    margin-top: 1.8rem;
+    display: flex;
+    justify-content: center;
+    gap: 1rem;
+    flex-wrap: wrap;
+}
+
+input {
+    background: var(--bg-deep);
+    border: 1px solid var(--border);
+    color: white;
+    padding: 10px;
+    border-radius: 6px;
+    width: 170px;
+}
+
+button {
+    background-color: var(--accent);
+    color: white;
+    border: none;
+    padding: 10px 22px;
+    border-radius: 6px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background 0.2s;
+}
+
+button:hover {
+    background-color: var(--accent-hover);
+}
+
+/* Footer (if used later) */
+footer {
+    text-align: center;
+    color: var(--text-secondary);
+    font-size: 0.8rem;
+    padding: 2rem 0;
+}
+
+/* Remove number input arrows (Chrome, Edge, Safari, Opera) */
+input[type=number]::-webkit-inner-spin-button,
+input[type=number]::-webkit-outer-spin-button {
+    -webkit-appearance: none;
+    margin: 0;
+}
+
+/* Remove number input arrows (Firefox) */
+input[type=number] {
+    -moz-appearance: textfield;
+}

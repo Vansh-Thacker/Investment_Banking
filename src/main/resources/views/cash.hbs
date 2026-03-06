@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <link rel="stylesheet" href="../assets/style.css">
+    <title>Titan Invest | Terminal</title>
+</head>
+
+
+<body>
+
+<hr>
+
+<section id="summary" class="centered-summary">
+    <h2>Account Summary</h2>
+    <p><strong>Cash Balance:</strong> £<span id="cash-balance">{{balance}}</span></p>
+
+    <div class="action-row">
+        <form id="depositForm" action="/cash/deposit" method="get">
+            <input name="amount" id="amount-input" type="number" step="0.01" placeholder="Amount (pounds)" />
+            <button type="submit">Deposit</button>
+        </form>
+
+        <form id="withdrawForm" action="/cash/withdraw" method="get">
+            <input name="amount" id="withdraw-amount-input" type="number" step="0.01" placeholder="Amount (pounds)" />
+            <button type="submit">Withdraw</button>
+        </form>
+    </div>
+</section>
+
+{{#if error}}
+<script>
+    (function(){
+        try {
+            var decoded = decodeURIComponent('{{error}}');
+            if (decoded) {
+                alert(decoded);
+                try {
+                    var url = new URL(window.location.href);
+                    url.searchParams.delete('error');
+                    var clean = url.pathname + (url.searchParams.toString() ? ('?' + url.searchParams.toString()) : '');
+                    history.replaceState(null, '', clean);
+                } catch (ex) { }
+            }
+        } catch (e) {
+            try { alert('{{error}}'); } catch (e2) { }
+        }
+    })();
+</script>
+{{/if}}
+
+<hr>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function () {
+        const balanceEl = document.getElementById('cash-balance');
+        if (balanceEl) {
+            const raw = balanceEl.textContent && balanceEl.textContent.trim();
+            const pence = parseInt(raw || '0', 10) || 0;
+            balanceEl.textContent = (pence / 100).toFixed(2);
+        }
+
+        const depositForm = document.getElementById('depositForm');
+        const withdrawForm = document.getElementById('withdrawForm');
+
+        if (depositForm) {
+            depositForm.addEventListener('submit', function (e) {
+                const input = document.getElementById('amount-input');
+                const val = parseFloat(input.value);
+                if (isNaN(val) || val <= 0) { e.preventDefault(); alert('Enter positive amount'); return; }
+                input.value = Math.round(val * 100);
+            });
+        }
+
+        if (withdrawForm) {
+            withdrawForm.addEventListener('submit', function (e) {
+                const input = document.getElementById('withdraw-amount-input');
+                const val = parseFloat(input.value);
+                if (isNaN(val) || val <= 0) { e.preventDefault(); alert('Enter positive amount'); return; }
+                input.value = Math.round(val * 100);
+            });
+        }
+    });
+</script>
+
+</body>
+</html>
