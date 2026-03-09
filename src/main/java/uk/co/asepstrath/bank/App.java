@@ -16,7 +16,6 @@ import io.jooby.handlebars.HandlebarsModule;
 import io.jooby.helper.UniRestExtension;
 import io.jooby.hikari.HikariModule;
 import org.slf4j.Logger;
-import uk.co.asepstrath.bank.example.ExampleController_;
 
 
 import javax.sql.DataSource;
@@ -49,7 +48,6 @@ public class App extends Jooby {
         DataSource ds = require(DataSource.class);
         Logger log = getLog();
 
-        mvc(new ExampleController_(ds,log));
         mvc(new CashController_(log, new Account())); // the new controllers -- ds call might have been failing our pipeline, removing it for now -- ask mat abt if this was intentional og line  mvc(new CashController_(ds, log, new Account()));
         mvc(new InvestmentController_(ds, log, new Account()));
         //mvc(new EvaluationController_(ds, log)); -- not coded yet so throwing errors and therefore commenting out.
