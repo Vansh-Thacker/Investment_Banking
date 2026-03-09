@@ -14,7 +14,7 @@ public class SellConfirmationServiceTests {
     @BeforeEach
     public void setUp() {
         account = new Account();
-        account.deposit(500000);
+        account.deposit(10000000);
         service = new InvestmentService(account);
     }
 

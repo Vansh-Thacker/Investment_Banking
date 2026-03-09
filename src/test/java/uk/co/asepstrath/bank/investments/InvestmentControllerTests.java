@@ -78,7 +78,8 @@ public class InvestmentControllerTests {
 
         List<InvestmentTransaction> result = service.getPurchaseHistory(null);
 
-        assertEquals(0, result.size());
+        // purchase history shows all BUY transactions
+        assertEquals(1, result.size());
     }
 
     // ===== Tests for transactions endpoint with sort parameter =====

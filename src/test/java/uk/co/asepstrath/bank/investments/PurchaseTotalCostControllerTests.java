@@ -17,7 +17,7 @@ public class PurchaseTotalCostControllerTests {
     @BeforeEach
     public void setUp() {
         account = new Account();
-        account.deposit(500000);
+        account.deposit(10_000_000);
         service = new InvestmentService(account);
     }
 

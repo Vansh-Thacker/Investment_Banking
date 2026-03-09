@@ -29,8 +29,24 @@ public class InvestmentService {
         if (shares <= 0 || price <= 0) {
             throw new IllegalArgumentException("Shares and price must be positive");
         }
-        //Deduct cash
-        //Update position
+        // rounding to int to match Account withdraw(int)
+        int cost = (int) Math.round(shares * price);
+        account.withdraw(cost);
+
+        // get or make position for this ticker 
+        Position position = positions.computeIfAbsent(ticker, k -> {
+            Position p = new Position();
+            p.ticker = ticker;
+            p.shares = 0;
+            p.averageBookPrice = 0;
+            p.totalInvested = 0;
+            return p;
+        });
+        position.shares += shares;
+        position.totalInvested += cost;
+        // avg price per share -- int div as position uses it for averageBookPrice
+        position.averageBookPrice = position.totalInvested / position.shares;
+
         record(TYPE_BUY, ticker, shares, price);
     }
 

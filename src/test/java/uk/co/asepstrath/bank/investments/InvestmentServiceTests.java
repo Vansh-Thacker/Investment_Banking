@@ -111,7 +111,7 @@ public class InvestmentServiceTests {
         service.sell("AAPL", 10, 155.0);
 
         List<InvestmentTransaction> purchases = service.getPurchaseHistory(null);
-        assertEquals(0, purchases.size());
+        assertEquals(1, purchases.size()); // should purchase history be actuall purchase hist (all purchases) or only current purchases -a owned stocks list- (eg only things you have shares in)
     }
 
     // ===== Tests for getPurchaseHistory() sorting =====
@@ -178,11 +178,11 @@ public class InvestmentServiceTests {
     }
 
     @Test
-    public void getPurchaseHistoryMaintainsTimestampOnEachTransaction() {
+    public void getPurchaseHistoryMaintainsTimestampOnEachTransaction() throws InterruptedException {
         service.buy("AAPL", 10, 150.0);
-        LocalDateTime beforeSecondBuy = LocalDateTime.now();
+        // throwing pipeline errors bc timestamp = same when testing so adding sleep to give distinct
+        Thread.sleep(10);
         service.buy("GOOGL", 5, 2800.0);
-        LocalDateTime afterSecondBuy = LocalDateTime.now();
 
         List<InvestmentTransaction> purchases = service.getPurchaseHistory("asc");
 

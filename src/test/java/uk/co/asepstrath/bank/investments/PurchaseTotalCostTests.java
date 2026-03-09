@@ -18,7 +18,7 @@ public class PurchaseTotalCostTests {
     @BeforeEach
     public void setUp() {
         account = new Account();
-        account.deposit(500000); // Start with sufficient funds for all tests
+        account.deposit(10000000); // Start with sufficient funds for all tests
         service = new InvestmentService(account);
     }
 
