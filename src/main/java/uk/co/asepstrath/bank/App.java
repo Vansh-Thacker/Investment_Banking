@@ -15,7 +15,6 @@ import io.jooby.handlebars.HandlebarsModule;
 import io.jooby.helper.UniRestExtension;
 import io.jooby.hikari.HikariModule;
 import org.slf4j.Logger;
-import uk.co.asepstrath.bank.example.ExampleController_;
 import uk.co.asepstrath.bank.user.LoginController;
 import uk.co.asepstrath.bank.user.LoginController_;
 import uk.co.asepstrath.bank.user.UserService;
