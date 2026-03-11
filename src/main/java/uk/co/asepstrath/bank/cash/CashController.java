@@ -137,10 +137,17 @@ public class CashController extends Jooby {
         // Load saved balance from CSV
         int savedBalance = users.getBalance(username);
 
-        // Reset in-memory balance to match CSV
-        if (service.getBalance() != 0) {
-            service.withdraw(service.getBalance()); // reset to 0
-            service.deposit(savedBalance);          // load saved balance
+        // Only reset if the current balance is NOT already the saved balance
+        if (service.getBalance() != savedBalance) {
+            // Reset to 0 only if balance is > 0 (avoid withdraw(0) error)
+            if (service.getBalance() > 0) {
+                service.withdraw(service.getBalance());
+            }
+
+            // Load saved balance (only if > 0 to avoid deposit(0) errors)
+            if (savedBalance > 0) {
+                service.deposit(savedBalance);
+            }
         }
 
 
