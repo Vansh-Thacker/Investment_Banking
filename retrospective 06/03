@@ -1,9 +1,9 @@
 technique: Start, Stop, Continue
 What we need to start on: 
--The KYC questionaire, we should define our requirements by next Friday
--Changing our current investment management code based the refined requirements
--The frontend for the  login system, use the user stories for requirements
--The tests for the login system, stay in communication with whoever is coding the login system before its time to do the tests so it is easier when it comes to it.
+-The KYC questionaire, we should define our requirements by next Friday - ISHBEL and VANSH
+-Changing our current investment management code based the refined requirements - JONAS
+-The frontend for the  login system, use the user stories for requirements - EMMANUEL
+-The tests for the login system, stay in communication with whoever is coding the login system before its time to do the tests so it is easier when it comes to it. - MATTHEW
 - Make sure to rerun *all* tests before pushing new code, to prevent yourself from pushing bad code that affects other sections
 
 What we have stopped:
@@ -13,8 +13,8 @@ What we have stopped:
 
 What we will continue:
 -Using our issue board
--coding the investment management system
--Doing the logic for the login system
+-coding the investment management system -JONAS
+-Doing the logic for the login system - EMMANUEL
 
 Next sprint focus:
 -Finalise KYC
