@@ -138,8 +138,10 @@ public class CashController extends Jooby {
         int savedBalance = users.getBalance(username);
 
         // Reset in-memory balance to match CSV
-        service.withdraw(service.getBalance()); // reset to 0
-        service.deposit(savedBalance);          // load saved balance
+        if (service.getBalance() != 0) {
+            service.withdraw(service.getBalance()); // reset to 0
+            service.deposit(savedBalance);          // load saved balance
+        }
 
 
         Map<String, Object> model = new HashMap<>();
