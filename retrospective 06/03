@@ -13,11 +13,11 @@ What we have stopped:
 
 What we will continue:
 -Using our issue board
--Doing the logic for the investment management code
+-coding the investment management system
 -Doing the logic for the login system
 
 Next sprint focus:
 -Finalise KYC
--Build and test investement system
+-Build and test remaining functionality for the investement system by completing remaining investment-management user stories
 -Begin looking at evaluation
 -Identify what user stories are next on the issue board
