@@ -1,16 +1,21 @@
 package uk.co.asepstrath.bank.cash;
 import io.jooby.Context;
 import io.jooby.ModelAndView;
+import io.jooby.Session;
 import io.jooby.value.Value;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
+import org.mockito.MockitoFramework;
 import org.slf4j.Logger;
 import uk.co.asepstrath.bank.Account;
+import uk.co.asepstrath.bank.user.UserService;
+
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.List;
 import java.util.Map;
 import static org.junit.jupiter.api.Assertions.*;
+import static org.mockito.ArgumentMatchers.contains;
 import static org.mockito.Mockito.*;
 
 
@@ -35,12 +40,27 @@ public class CashControllerTest {
 
     @Test
     void testDepositPostSuccess() throws Exception { // does the POST endpoint work correct
-        Account account = new Account();
+         Account account = new Account();
         CashController controller = newController(account);
+
+        // Inject dummy UserService
+        UserService users = mock(UserService.class);
+        controller.setUserService(users);
+
+        // Mock context + session
         Context ctx = mock(Context.class);
+        Session session = mock(Session.class);
+        Value usernameValue = mock(Value.class);
+
+        when(ctx.session()).thenReturn(session);
+        when(session.get("user")).thenReturn(usernameValue);
+        when(usernameValue.value()).thenReturn("testuser");
+
         CashRequest req = new CashRequest();
         req.amount = 500;
+
         controller.deposit(req, ctx);
+
         assertEquals(500, account.getBalance());
         verify(ctx).sendRedirect("/cash/cashsidefrontend");
     }
@@ -61,8 +81,22 @@ public class CashControllerTest {
     void testDepositGetSuccess() throws Exception { //does the GET deposit work correctly
         Account account = new Account();
         CashController controller = newController(account);
+
+        // Inject dummy UserService
+        UserService users = mock(UserService.class);
+        controller.setUserService(users);
+
+        // Mock context + session
         Context ctx = mock(Context.class);
+        Session session = mock(Session.class);
+        Value usernameValue = mock(Value.class);
+
+        when(ctx.session()).thenReturn(session);
+        when(session.get("user")).thenReturn(usernameValue);
+        when(usernameValue.value()).thenReturn("testuser");
+
         controller.depositGet(200, ctx);
+
         assertEquals(200, account.getBalance());
         verify(ctx).sendRedirect("/cash/cashsidefrontend");
     }
@@ -83,10 +117,25 @@ public class CashControllerTest {
         Account account = new Account();
         account.deposit(1000);
         CashController controller = newController(account);
+
+        // Inject dummy UserService
+        UserService users = mock(UserService.class);
+        controller.setUserService(users);
+
+        // Mock context + session
         Context ctx = mock(Context.class);
+        Session session = mock(Session.class);
+        Value usernameValue = mock(Value.class);
+
+        when(ctx.session()).thenReturn(session);
+        when(session.get("user")).thenReturn(usernameValue);
+        when(usernameValue.value()).thenReturn("testuser");
+
         CashRequest req = new CashRequest();
         req.amount = 300;
+
         controller.withdraw(req, ctx);
+
         assertEquals(700, account.getBalance());
         verify(ctx).sendRedirect("/cash/cashsidefrontend");
     }
@@ -110,10 +159,25 @@ public class CashControllerTest {
         Account account = new Account();
         account.deposit(500);
         CashController controller = newController(account);
+
+        // Inject dummy UserService
+        UserService users = mock(UserService.class);
+        controller.setUserService(users);
+
+        // Mock context + session
         Context ctx = mock(Context.class);
+        Session session = mock(Session.class);
+        Value usernameValue = mock(Value.class);
+
+        when(ctx.session()).thenReturn(session);
+        when(session.get("user")).thenReturn(usernameValue);
+        when(usernameValue.value()).thenReturn("testuser");
+
         controller.withdrawGet(200, ctx);
+
         assertEquals(300, account.getBalance());
         verify(ctx).sendRedirect("/cash/cashsidefrontend");
+
     }
 
     @Test
@@ -150,19 +214,37 @@ public class CashControllerTest {
     void testDashboardModel() throws Exception {
         Account account = new Account();
         CashController controller = newController(account);
-        controller.getService().deposit(500);
+
+        // Inject dummy UserService
+        UserService users = mock(UserService.class);
+        controller.setUserService(users);
+
+        // Mock saved balance lookup
+        when(users.getBalance("testuser")).thenReturn(500);
+
+        // Mock context + session
         Context ctx = mock(Context.class);
-        Value value = mock(Value.class);
-        when(ctx.query("error")).thenReturn(value);
-        when(value.value((String) null)).thenReturn(null);
+        Session session = mock(Session.class);
+        Value usernameValue = mock(Value.class);
+        Value errorValue = mock(Value.class);
+
+        when(ctx.session()).thenReturn(session);
+        when(session.get("user")).thenReturn(usernameValue);
+        when(usernameValue.value((String) null)).thenReturn("testuser");
+
+        // Mock ?error query param
+        when(ctx.query("error")).thenReturn(errorValue);
+        when(errorValue.value((String) null)).thenReturn(null);
+
+        // Run controller
         ModelAndView mv = controller.showDashboard(ctx);
+
         assertEquals("cash.hbs", mv.getView());
         Map<String, Object> model = (Map<String, Object>) mv.getModel();
+
         assertTrue(model.containsKey("balance"));
         assertTrue(model.containsKey("history"));
         assertTrue(model.containsKey("name"));
         assertTrue(model.containsKey("error"));
     }
-
-
 }

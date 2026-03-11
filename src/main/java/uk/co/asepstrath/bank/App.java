@@ -16,7 +16,9 @@ import io.jooby.handlebars.HandlebarsModule;
 import io.jooby.helper.UniRestExtension;
 import io.jooby.hikari.HikariModule;
 import org.slf4j.Logger;
-
+import uk.co.asepstrath.bank.user.LoginController;
+import uk.co.asepstrath.bank.user.LoginController_;
+import uk.co.asepstrath.bank.user.UserService;
 
 import javax.sql.DataSource;
 import java.sql.Connection;
@@ -45,12 +47,37 @@ public class App extends Jooby {
         /*
         Now we set up our controllers and their dependencies
          */
-        DataSource ds = require(DataSource.class);
+        //DataSource ds = require(DataSource.class);
+
+
+
+        /*  // Commented out previous controller stuff
         Logger log = getLog();
 
-        mvc(new CashController_(log, new Account())); // the new controllers -- ds call might have been failing our pipeline, removing it for now -- ask mat abt if this was intentional og line  mvc(new CashController_(ds, log, new Account()));
-        mvc(new InvestmentController_(ds, log, new Account()));
-        //mvc(new EvaluationController_(ds, log)); -- not coded yet so throwing errors and therefore commenting out.
+        mvc(new CashController_(log, new Account())); // the new controllers
+        mvc(new LoginController_(log, new UserService())); // the new controllers
+        */
+
+
+        Logger log = getLog();
+
+        UserService users = new UserService();
+        Account account = new Account();
+
+        // Create controller manually
+        CashController cash = new CashController(log, account);
+
+        // Inject UserService
+        cash.setUserService(users);
+
+        // Register it with Jooby
+        mvc(new CashController_(cash));
+        mvc(new LoginController_(log, users));
+
+
+
+        //mvc(new InvestmentController(ds, log));
+        //mvc(new EvaluationController(ds, log));
 
 
         /*

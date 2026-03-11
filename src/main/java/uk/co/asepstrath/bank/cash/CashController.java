@@ -11,11 +11,13 @@ import java.nio.charset.StandardCharsets;
 import java.util.HashMap;
 import java.util.Map;
 import uk.co.asepstrath.bank.Account;
+import uk.co.asepstrath.bank.user.UserService;
 
 
 @Path("/cash")
 public class CashController extends Jooby {
 
+    private UserService users;
     private final CashService service;
 
     public CashController(Logger log, Account account) {
@@ -31,6 +33,10 @@ public class CashController extends Jooby {
         return service;
     }
 
+    public void setUserService(UserService users) {
+        this.users = users;
+    }
+
     @GET
     public void index(Context ctx) {
         ctx.sendRedirect("/cash/cashsidefrontend");
@@ -43,6 +49,11 @@ public class CashController extends Jooby {
         try {
             service.deposit(req.amount);
             ctx.sendRedirect("/cash/cashsidefrontend");
+
+            // saved balance updated after every transaction
+            String username = ctx.session().get("user").value();
+            users.updateBalance(username, service.getBalance());
+
         } catch (IllegalArgumentException e){
             String msg = URLEncoder.encode(e.getMessage(), StandardCharsets.UTF_8);
             ctx.sendRedirect("/cash/cashsidefrontend?error=" + msg);
@@ -56,6 +67,11 @@ public class CashController extends Jooby {
         try {
             service.deposit(amount);
             ctx.sendRedirect("/cash/cashsidefrontend");
+
+            // saved balance updated after every transaction
+            String username = ctx.session().get("user").value();
+            users.updateBalance(username, service.getBalance());
+            
         } catch (IllegalArgumentException e) {
             String msg = URLEncoder.encode(e.getMessage(), StandardCharsets.UTF_8);
             ctx.sendRedirect("/cash/cashsidefrontend?error=" + msg);
@@ -68,6 +84,11 @@ public class CashController extends Jooby {
         try {
             service.withdraw(req.amount);
             ctx.sendRedirect("/cash/cashsidefrontend");
+
+            // saved balance updated after every transaction
+            String username = ctx.session().get("user").value();
+            users.updateBalance(username, service.getBalance());
+
         } catch (IllegalArgumentException e) {
             String msg = URLEncoder.encode(e.getMessage(), StandardCharsets.UTF_8);
             ctx.sendRedirect("/cash/cashsidefrontend?error=" + msg);
@@ -81,6 +102,11 @@ public class CashController extends Jooby {
         try {
             service.withdraw(amount);
             ctx.sendRedirect("/cash/cashsidefrontend");
+
+            // saved balance updated after every transaction
+            String username = ctx.session().get("user").value();
+            users.updateBalance(username, service.getBalance());
+
         } catch (IllegalArgumentException e) {
             String msg = URLEncoder.encode(e.getMessage(), StandardCharsets.UTF_8);
             ctx.sendRedirect("/cash/cashsidefrontend?error=" + msg);
@@ -100,6 +126,31 @@ public class CashController extends Jooby {
 
     @GET("/cashsidefrontend")
     public ModelAndView showDashboard(Context ctx) {
+
+        // Get logged-in username from session
+        String username = ctx.session().get("user").value((String) null);
+        if (username == null) {
+            ctx.sendRedirect("/login");
+            return null;
+        }
+
+        // Load saved balance from CSV
+        int savedBalance = users.getBalance(username);
+
+        // Only reset if the current balance is NOT already the saved balance
+        if (service.getBalance() != savedBalance) {
+            // Reset to 0 only if balance is > 0 (avoid withdraw(0) error)
+            if (service.getBalance() > 0) {
+                service.withdraw(service.getBalance());
+            }
+
+            // Load saved balance (only if > 0 to avoid deposit(0) errors)
+            if (savedBalance > 0) {
+                service.deposit(savedBalance);
+            }
+        }
+
+
         Map<String, Object> model = new HashMap<>();
         model.put("balance", service.getBalance());
         model.put("history", service.getHistory());
@@ -110,6 +161,5 @@ public class CashController extends Jooby {
 
         return new ModelAndView("cash.hbs", model);
     }
-
-
 }
+

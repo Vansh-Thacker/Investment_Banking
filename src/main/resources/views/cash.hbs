@@ -2,17 +2,20 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <link rel="stylesheet" href="../assets/style.css">
+    <link rel="stylesheet" href="/assets/style.css">
     <title>Titan Invest | Terminal</title>
 </head>
 
+<body class="auth-page">
 
-<body>
+<nav class="top-nav">
+    <a href="/cash/cashsidefrontend">Home</a>
+    <a href="/logout">Logout</a>
+</nav>
 
-<hr>
-
-<section id="summary" class="centered-summary">
+<section id="summary" class="auth-form">
     <h2>Account Summary</h2>
+
     <p><strong>Cash Balance:</strong> £<span id="cash-balance">{{balance}}</span></p>
 
     <div class="action-row">
@@ -48,8 +51,6 @@
     })();
 </script>
 {{/if}}
-
-<hr>
 
 <script>
     document.addEventListener('DOMContentLoaded', function () {
