@@ -50,9 +50,8 @@ public class InvestmentService {
         record(TYPE_BUY, ticker, shares, price);
     }
 
-    
     // execute sale, decrease holdings, credit account, close position if 0
-    // record transaction with timestamp, price and proceeds. returns confirmation
+    // record transaction with timestamp, price, proceeds and realized gain/loss. returns confirmation
      
     public SellConfirmation sell(String ticker, int shares, double price) {
         if (shares <= 0 || price <= 0) {
@@ -63,8 +62,12 @@ public class InvestmentService {
         if (position == null || position.shares < shares) {
             log.error("Validation: insufficient shares for SELL {} - held {}, requested {}. Processing transaction anyway (historical data).", ticker, held, shares);
         }
+        int costBasis = (position != null && position.shares > 0)
+                ? (shares * position.averageBookPrice)
+                : 0;
         double proceeds = shares * price;
-        record("SELL", ticker, shares, price, proceeds);
+        double realizedGainLoss = proceeds - costBasis;
+        record("SELL", ticker, shares, price, proceeds, realizedGainLoss);
         account.deposit((int) Math.round(proceeds));
         if (position == null) {
             position = new Position();
@@ -74,9 +77,12 @@ public class InvestmentService {
             position.totalInvested = 0;
             positions.put(ticker, position);
         }
+        position.totalInvested -= costBasis;
         position.shares -= shares;
         if (position.shares <= 0) {
             positions.remove(ticker);
+        } else {
+            position.averageBookPrice = position.totalInvested / position.shares;
         }
         return buildSellConfirmation(ticker, shares, price);
     }
@@ -118,10 +124,14 @@ public class InvestmentService {
     }
 
     private void record(String type, String ticker, int shares, double price) {
-        record(type, ticker, shares, price, 0.0);
+        record(type, ticker, shares, price, 0.0, null);
     }
 
     private void record(String type, String ticker, int shares, double price, double proceeds) {
+        record(type, ticker, shares, price, proceeds, null);
+    }
+
+    private void record(String type, String ticker, int shares, double price, double proceeds, Double realizedGainLoss) {
         if (shares <= 0 || price <= 0) {
             throw new IllegalArgumentException("Shares and price must be positive");
         }
@@ -132,6 +142,7 @@ public class InvestmentService {
         invRecord.shares = shares;
         invRecord.price = price;
         invRecord.proceeds = proceeds;
+        invRecord.realizedGainLoss = realizedGainLoss;
         history.add(invRecord);
     }
 

@@ -12,6 +12,8 @@ public class InvestmentTransaction {
     public double price;
     // proceeds from a sale (shares * price) set when type is sell
     public double proceeds;
+    // realized gain/loss on SELL: sale proceeds - cost basis
+    public Double realizedGainLoss;
 
     // total cost of trade (shares * price) formatted in gbp
     public String getTotalCostGbp() {

@@ -311,4 +311,80 @@ public class InvestmentServiceTests {
         assertNull(service.getPosition("AAPL"));
     }
 
+    // ===== Sell order: partial sell updates totalInvested and average book price =====
+
+    @Test
+    public void partialSellUpdatesTotalInvestedAndKeepsAverageBookPriceForRemainingShares() {
+        service.buy("AAPL", 100, 150.0); // totalInvested 15000, avg 150
+        Position before = service.getPosition("AAPL");
+        assertEquals(100, before.shares);
+        assertEquals(150, before.averageBookPrice);
+        assertEquals(15000, before.totalInvested);
+
+        service.sell("AAPL", 40, 160.0); // sell 40 at 160
+
+        Position after = service.getPosition("AAPL");
+        assertNotNull(after);
+        assertEquals(60, after.shares);
+        // cost basis sold = 40 * 150 = 6000; totalInvested = 15000 - 6000 = 9000
+        assertEquals(9000, after.totalInvested);
+        assertEquals(150, after.averageBookPrice); // 9000/60 = 150
+    }
+
+    @Test
+    public void sellTransactionStoresRealizedGainLoss() {
+        service.buy("AAPL", 10, 100.0); // cost basis 100 per share
+        service.sell("AAPL", 4, 110.0); // proceeds 440, cost basis 400, gain 40
+
+        List<InvestmentTransaction> history = service.getHistory();
+        InvestmentTransaction sellTx = history.stream()
+                .filter(t -> "SELL".equals(t.type))
+                .findFirst()
+                .orElseThrow();
+        assertEquals(40.0, sellTx.realizedGainLoss, 0.01);
+    }
+
+    @Test
+    public void sellTransactionStoresRealizedLossWhenSellingBelowCost() {
+        service.buy("MSFT", 20, 50.0); // cost basis 50 per share
+        service.sell("MSFT", 10, 45.0); // proceeds 450, cost basis 500, loss -50
+
+        List<InvestmentTransaction> history = service.getHistory();
+        InvestmentTransaction sellTx = history.stream()
+                .filter(t -> "SELL".equals(t.type))
+                .findFirst()
+                .orElseThrow();
+        assertEquals(-50.0, sellTx.realizedGainLoss, 0.01);
+    }
+
+    @Test
+    public void sellingAllSharesStoresRealizedGainAndClosesPosition() {
+        service.buy("GOOGL", 5, 200.0);
+        service.sell("GOOGL", 5, 210.0); // proceeds 1050, cost 1000, gain 50
+
+        assertNull(service.getPosition("GOOGL"));
+        InvestmentTransaction sellTx = service.getHistory().stream()
+                .filter(t -> "SELL".equals(t.type))
+                .findFirst()
+                .orElseThrow();
+        assertEquals(50.0, sellTx.realizedGainLoss, 0.01);
+    }
+
+    // ===== Sell order: positions contain only stocks user owns =====
+
+    @Test
+    public void getPositionsReturnsOnlyStocksUserOwns() {
+        assertTrue(service.getPositions().isEmpty());
+
+        service.buy("AAPL", 10, 150.0);
+        service.buy("MSFT", 5, 300.0);
+        assertEquals(2, service.getPositions().size());
+        assertTrue(service.getPositions().stream().anyMatch(p -> "AAPL".equals(p.ticker)));
+        assertTrue(service.getPositions().stream().anyMatch(p -> "MSFT".equals(p.ticker)));
+
+        service.sell("AAPL", 10, 155.0);
+        assertEquals(1, service.getPositions().size());
+        assertEquals("MSFT", service.getPositions().iterator().next().ticker);
+    }
+
 }
