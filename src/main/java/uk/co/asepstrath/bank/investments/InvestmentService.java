@@ -31,7 +31,13 @@ public class InvestmentService {
         }
         // rounding to int to match Account withdraw(int)
         int cost = (int) Math.round(shares * price);
-        account.withdraw(cost);
+        int balance = account.getBalance();
+        if (balance < cost) {
+            log.warn("Validation: insufficient funds for BUY {} - balance {}, cost {}. Processing transaction anyway (historical data).", ticker, balance, cost);
+            account.withdrawAllowNegative(cost);
+        } else {
+            account.withdraw(cost);
+        }
 
         // get or make position for this ticker 
         Position position = positions.computeIfAbsent(ticker, k -> {
@@ -47,11 +53,52 @@ public class InvestmentService {
         // avg price per share -- int div as position uses it for averageBookPrice
         position.averageBookPrice = position.totalInvested / position.shares;
 
-        record(TYPE_BUY, ticker, shares, price);
+        record(TYPE_BUY, ticker, shares, price, position.shares);
+    }
+
+    /**
+     * User-facing buy: validates ticker/shares/price, checks funds (logs WARNING if insufficient per §1),
+     * takes money, updates shares, records transaction, returns success/unsuccess message.
+     * Per requirements, insufficient cash still processes (warning logged).
+     */
+    public PurchaseResult newTransaction(String ticker, int shares, double price) {
+        PurchaseResult result = new PurchaseResult();
+        if (ticker == null || ticker.isBlank()) {
+            result.success = false;
+            result.message = "Ticker is required";
+            return result;
+        }
+        String normalized = ticker.trim().toUpperCase();
+        if (!normalized.matches("[A-Z]{1,5}")) {
+            result.success = false;
+            result.message = "Ticker must be 1–5 uppercase letters";
+            return result;
+        }
+        if (shares <= 0) {
+            result.success = false;
+            result.message = "Number of shares must be positive";
+            return result;
+        }
+        if (price <= 0) {
+            result.success = false;
+            result.message = "Price must be positive";
+            return result;
+        }
+        buy(normalized, shares, price);
+        NumberFormat gbp = NumberFormat.getCurrencyInstance(Locale.UK);
+        int cost = (int) Math.round(shares * price);
+        result.success = true;
+        result.message = "Transaction successful.";
+        result.ticker = normalized;
+        result.shares = shares;
+        result.price = price;
+        result.totalCostGbp = gbp.format(cost);
+        result.balanceAfter = account.getBalance();
+        return result;
     }
 
     // execute sale, decrease holdings, credit account, close position if 0
-    // record transaction with timestamp, price, proceeds and realized gain/loss. returns confirmation
+    // record transaction with timestamp, price, proceeds and realized gain/loss -  returns confirmation
      
     public SellConfirmation sell(String ticker, int shares, double price) {
         if (shares <= 0 || price <= 0) {
@@ -67,7 +114,8 @@ public class InvestmentService {
                 : 0;
         double proceeds = shares * price;
         double realizedGainLoss = proceeds - costBasis;
-        record("SELL", ticker, shares, price, proceeds, realizedGainLoss);
+        int sharesAfter = (position != null && position.shares >= shares) ? (position.shares - shares) : 0;
+        record("SELL", ticker, shares, price, proceeds, realizedGainLoss, sharesAfter);
         account.deposit((int) Math.round(proceeds));
         if (position == null) {
             position = new Position();
@@ -124,14 +172,18 @@ public class InvestmentService {
     }
 
     private void record(String type, String ticker, int shares, double price) {
-        record(type, ticker, shares, price, 0.0, null);
+        record(type, ticker, shares, price, 0.0, null, null);
     }
 
-    private void record(String type, String ticker, int shares, double price, double proceeds) {
-        record(type, ticker, shares, price, proceeds, null);
+    private void record(String type, String ticker, int shares, double price, int sharesAfter) {
+        record(type, ticker, shares, price, 0.0, null, sharesAfter);
     }
 
     private void record(String type, String ticker, int shares, double price, double proceeds, Double realizedGainLoss) {
+        record(type, ticker, shares, price, proceeds, realizedGainLoss, null);
+    }
+
+    private void record(String type, String ticker, int shares, double price, double proceeds, Double realizedGainLoss, Integer sharesAfter) {
         if (shares <= 0 || price <= 0) {
             throw new IllegalArgumentException("Shares and price must be positive");
         }
@@ -143,6 +195,7 @@ public class InvestmentService {
         invRecord.price = price;
         invRecord.proceeds = proceeds;
         invRecord.realizedGainLoss = realizedGainLoss;
+        invRecord.sharesAfter = sharesAfter;
         history.add(invRecord);
     }
 
@@ -154,8 +207,23 @@ public class InvestmentService {
         return positions.get(ticker); //return specific stock holding
     }
 
+    // cash bal for portfolio summary
+    public int getCashBalance() {
+        return account.getBalance();
+    }
+
     public List<InvestmentTransaction> getHistory() {
-        return history; //returns buy and sell history
+        return history; //returns buy and sell history (insertion order)
+    }
+
+    /// all transactions sorted by timestamp, sortOrder "asc" = oldest first, null or "desc" = newest
+    public List<InvestmentTransaction> getHistorySorted(String sortOrder) {
+        boolean ascending = "asc".equalsIgnoreCase(sortOrder);
+        return history.stream()
+                .sorted(ascending
+                        ? Comparator.comparing(t -> t.timestamp, Comparator.nullsLast(Comparator.naturalOrder()))
+                        : Comparator.<InvestmentTransaction, LocalDateTime>comparing(t -> t.timestamp, Comparator.nullsLast(Comparator.naturalOrder())).reversed())
+                .collect(Collectors.toList());
     }
 
     // returns only BUY (purchase) transactions sorted by timestamp

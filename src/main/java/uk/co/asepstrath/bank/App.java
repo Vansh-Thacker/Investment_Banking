@@ -8,6 +8,7 @@ import uk.co.asepstrath.bank.cash.CashController;
 import uk.co.asepstrath.bank.Account;
 import uk.co.asepstrath.bank.cash.CashController_;
 import uk.co.asepstrath.bank.evaluation.EvaluationController;
+import uk.co.asepstrath.bank.evaluation.EquitiesService;
 import uk.co.asepstrath.bank.evaluation.PriceService;
 import uk.co.asepstrath.bank.investments.InvestmentController;
 import uk.co.asepstrath.bank.investments.InvestmentController_;
@@ -76,7 +77,8 @@ public class App extends Jooby {
 
         DataSource ds = require(DataSource.class);
         PriceService priceService = new PriceService();
-        mvc(new InvestmentController_(ds, log, account, priceService));
+        EquitiesService equitiesService = new EquitiesService();
+        mvc(new InvestmentController_(ds, log, account, priceService, equitiesService));
 
 
         /*

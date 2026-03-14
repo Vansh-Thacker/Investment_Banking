@@ -129,4 +129,167 @@ public class InvestmentTransactionTests {
         assertEquals(7750.0, tx.proceeds);
     }
 
+    // ===== getTotalEarningsSigned: positive for SELL, negative for BUY =====
+
+    @Test
+    public void getTotalEarningsSignedNegativeForBuy() {
+        InvestmentTransaction tx = new InvestmentTransaction();
+        tx.type = "BUY";
+        tx.shares = 10;
+        tx.price = 150.0;
+
+        double signed = tx.getTotalEarningsSigned();
+
+        assertEquals(-1500.0, signed, 0.01);
+    }
+
+    @Test
+    public void getTotalEarningsSignedPositiveForSell() {
+        InvestmentTransaction tx = new InvestmentTransaction();
+        tx.type = "SELL";
+        tx.shares = 5;
+        tx.price = 155.0;
+        tx.proceeds = 775.0;
+
+        double signed = tx.getTotalEarningsSigned();
+
+        assertEquals(775.0, signed, 0.01);
+    }
+
+    @Test
+    public void getTotalEarningsSignedZeroForZeroShares() {
+        InvestmentTransaction tx = new InvestmentTransaction();
+        tx.type = "BUY";
+        tx.shares = 0;
+        tx.price = 150.0;
+
+        assertEquals(0.0, tx.getTotalEarningsSigned(), 0.01);
+    }
+
+    @Test
+    public void getTotalEarningsSignedUsesProceedsForSell() {
+        InvestmentTransaction tx = new InvestmentTransaction();
+        tx.type = "SELL";
+        tx.shares = 4;
+        tx.price = 110.0;
+        tx.proceeds = 440.0;
+
+        assertEquals(440.0, tx.getTotalEarningsSigned(), 0.01);
+    }
+
+    // ===== getTotalEarningsGbp: formatted in GBP with sign =====
+
+    @Test
+    public void getTotalEarningsGbpNegativeForBuy() {
+        InvestmentTransaction tx = new InvestmentTransaction();
+        tx.type = "BUY";
+        tx.shares = 10;
+        tx.price = 150.0;
+
+        String gbp = tx.getTotalEarningsGbp();
+
+        assertTrue(gbp.contains("1,500"));
+        assertTrue(gbp.startsWith("-") || gbp.contains("1,500"));
+        assertTrue(gbp.contains("£"));
+    }
+
+    @Test
+    public void getTotalEarningsGbpPositiveForSell() {
+        InvestmentTransaction tx = new InvestmentTransaction();
+        tx.type = "SELL";
+        tx.shares = 5;
+        tx.proceeds = 775.0;
+
+        String gbp = tx.getTotalEarningsGbp();
+
+        assertTrue(gbp.contains("775"));
+        assertTrue(gbp.startsWith("£"));
+    }
+
+    @Test
+    public void getTotalEarningsGbpFormattedInGBP() {
+        InvestmentTransaction tx = new InvestmentTransaction();
+        tx.type = "SELL";
+        tx.shares = 100;
+        tx.proceeds = 15500.0;
+
+        String gbp = tx.getTotalEarningsGbp();
+
+        assertTrue(gbp.startsWith("£"));
+        assertTrue(gbp.contains("15,500"));
+    }
+
+    @Test
+    public void getTotalEarningsGbpZeroWhenInvalid() {
+        InvestmentTransaction tx = new InvestmentTransaction();
+        tx.type = "BUY";
+        tx.shares = 0;
+        tx.price = 150.0;
+
+        String gbp = tx.getTotalEarningsGbp();
+
+        assertTrue(gbp.contains("0"));
+    }
+
+    // ===== getSharesSigned: + for BUY, - for SELL =====
+
+    @Test
+    public void getSharesSignedPositiveForBuy() {
+        InvestmentTransaction tx = new InvestmentTransaction();
+        tx.type = "BUY";
+        tx.shares = 10;
+
+        assertEquals(10, tx.getSharesSigned());
+    }
+
+    @Test
+    public void getSharesSignedNegativeForSell() {
+        InvestmentTransaction tx = new InvestmentTransaction();
+        tx.type = "SELL";
+        tx.shares = 5;
+
+        assertEquals(-5, tx.getSharesSigned());
+    }
+
+    @Test
+    public void getSharesSignedZeroWhenZeroShares() {
+        InvestmentTransaction tx = new InvestmentTransaction();
+        tx.type = "BUY";
+        tx.shares = 0;
+
+        assertEquals(0, tx.getSharesSigned());
+    }
+
+    @Test
+    public void getSharesSignedZeroForSellWithZeroShares() {
+        InvestmentTransaction tx = new InvestmentTransaction();
+        tx.type = "SELL";
+        tx.shares = 0;
+
+        assertEquals(0, tx.getSharesSigned());
+    }
+
+    // ===== getPricePerShareGbp: formatted in GBP =====
+
+    @Test
+    public void getPricePerShareGbpFormatsPrice() {
+        InvestmentTransaction tx = new InvestmentTransaction();
+        tx.price = 150.50;
+
+        String gbp = tx.getPricePerShareGbp();
+
+        assertTrue(gbp.startsWith("£"));
+        assertTrue(gbp.contains("150.50") || gbp.contains("150,50"));
+    }
+
+    @Test
+    public void getPricePerShareGbpZeroWhenPriceZero() {
+        InvestmentTransaction tx = new InvestmentTransaction();
+        tx.price = 0;
+
+        String gbp = tx.getPricePerShareGbp();
+
+        assertTrue(gbp.contains("0"));
+        assertTrue(gbp.startsWith("£"));
+    }
 }

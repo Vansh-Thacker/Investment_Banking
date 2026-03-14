@@ -242,6 +242,61 @@ public class InvestmentServiceTests {
         assertEquals(1, sellCount);
     }
 
+    // ===== getHistorySorted: all transactions sorted by timestamp =====
+
+    @Test
+    public void getHistorySortedIncludesBothBuyAndSell() {
+        service.buy("AAPL", 10, 150.0);
+        service.sell("AAPL", 5, 155.0);
+        service.buy("MSFT", 5, 300.0);
+
+        List<InvestmentTransaction> sorted = service.getHistorySorted(null);
+
+        assertEquals(3, sorted.size());
+        assertTrue(sorted.stream().anyMatch(t -> "BUY".equals(t.type)));
+        assertTrue(sorted.stream().anyMatch(t -> "SELL".equals(t.type)));
+    }
+
+    @Test
+    public void getHistorySortedNewestFirstByDefault() throws InterruptedException {
+        service.buy("AAPL", 10, 150.0);
+        Thread.sleep(5);
+        service.buy("GOOGL", 5, 2800.0);
+        Thread.sleep(5);
+        service.sell("AAPL", 5, 155.0);
+
+        List<InvestmentTransaction> desc = service.getHistorySorted(null);
+
+        assertEquals(3, desc.size());
+        // newest last in time = first in list
+        assertEquals("SELL", desc.get(0).type);
+        assertEquals("GOOGL", desc.get(1).ticker);
+        assertEquals("AAPL", desc.get(2).ticker);
+    }
+
+    @Test
+    public void getHistorySortedAscReturnsOldestFirst() throws InterruptedException {
+        service.buy("AAPL", 10, 150.0);
+        Thread.sleep(5);
+        service.buy("GOOGL", 5, 2800.0);
+        Thread.sleep(5);
+        service.sell("AAPL", 5, 155.0);
+
+        List<InvestmentTransaction> asc = service.getHistorySorted("asc");
+
+        assertEquals(3, asc.size());
+        assertEquals("AAPL", asc.get(0).ticker);
+        assertEquals("GOOGL", asc.get(1).ticker);
+        assertEquals("SELL", asc.get(2).type);
+    }
+
+    @Test
+    public void getHistorySortedEmptyWhenNoTransactions() {
+        List<InvestmentTransaction> sorted = service.getHistorySorted("asc");
+
+        assertTrue(sorted.isEmpty());
+    }
+
     // ===== Story 4: Sale execution and holdings update =====
 
     @Test
@@ -385,6 +440,204 @@ public class InvestmentServiceTests {
         service.sell("AAPL", 10, 155.0);
         assertEquals(1, service.getPositions().size());
         assertEquals("MSFT", service.getPositions().iterator().next().ticker);
+    }
+
+    // ===== Average purchase price: GBP formatted for display (investment manager story) =====
+
+    @Test
+    public void positionAveragePurchasePriceFormattedInGbp() {
+        service.buy("AAPL", 10, 150.0);
+
+        Position pos = service.getPosition("AAPL");
+        assertNotNull(pos);
+        String gbp = pos.getAveragePurchasePriceGbp();
+        assertTrue(gbp.startsWith("£"));
+        assertTrue(gbp.contains("150"));
+    }
+
+    @Test
+    public void positionAveragePurchasePriceUpdatedAfterMultipleBuys() {
+        service.buy("AAPL", 10, 100.0);
+        service.buy("AAPL", 10, 200.0); // avg = 150
+
+        Position pos = service.getPosition("AAPL");
+        assertNotNull(pos);
+        assertEquals(150, pos.averageBookPrice);
+        String gbp = pos.getAveragePurchasePriceGbp();
+        assertTrue(gbp.startsWith("£"));
+        assertTrue(gbp.contains("150"));
+    }
+
+    @Test
+    public void positionsReturnFormattedAveragePurchasePriceGbp() {
+        service.buy("MSFT", 5, 300.0);
+        assertEquals(1, service.getPositions().size());
+        Position p = service.getPositions().iterator().next();
+        assertEquals("MSFT", p.ticker);
+        assertTrue(p.getAveragePurchasePriceGbp().startsWith("£"));
+    }
+
+    @Test
+    public void averagePurchasePriceNotDisplayedForStocksUserDoesNotOwn() {
+        service.buy("AAPL", 10, 150.0);
+        service.sell("AAPL", 10, 155.0);
+
+        assertTrue(service.getPositions().isEmpty());
+        assertNull(service.getPosition("AAPL"));
+    }
+
+    @Test
+    public void noPositionsWhenNoStockPurchases() {
+        assertTrue(service.getPositions().isEmpty());
+    }
+
+    // ===== Position after each transaction: updated share count on transaction list =====
+
+    @Test
+    public void buyTransactionRecordsSharesAfter() {
+        service.buy("AAPL", 10, 150.0);
+
+        List<InvestmentTransaction> history = service.getHistory();
+        assertEquals(1, history.size());
+        InvestmentTransaction tx = history.get(0);
+        assertEquals("BUY", tx.type);
+        assertEquals(10, tx.shares);
+        assertNotNull(tx.sharesAfter);
+        assertEquals(10, tx.sharesAfter.intValue());
+    }
+
+    @Test
+    public void multipleBuysRecordCumulativeSharesAfter() {
+        service.buy("AAPL", 10, 150.0);
+        service.buy("AAPL", 5, 155.0);
+
+        List<InvestmentTransaction> history = service.getHistory();
+        assertEquals(2, history.size());
+        assertEquals(10, history.get(0).sharesAfter.intValue());
+        assertEquals(15, history.get(1).sharesAfter.intValue());
+    }
+
+    @Test
+    public void partialSellTransactionRecordsSharesAfter() {
+        service.buy("AAPL", 20, 100.0);
+        service.sell("AAPL", 7, 110.0);
+
+        List<InvestmentTransaction> history = service.getHistory();
+        InvestmentTransaction sellTx = history.stream()
+                .filter(t -> "SELL".equals(t.type))
+                .findFirst()
+                .orElseThrow();
+        assertNotNull(sellTx.sharesAfter);
+        assertEquals(13, sellTx.sharesAfter.intValue());
+        assertFalse(sellTx.isPositionClosed());
+    }
+
+    @Test
+    public void sellAllSharesRecordsSharesAfterZeroAndPositionClosed() {
+        service.buy("GOOGL", 5, 200.0);
+        service.sell("GOOGL", 5, 210.0);
+
+        List<InvestmentTransaction> history = service.getHistory();
+        InvestmentTransaction sellTx = history.stream()
+                .filter(t -> "SELL".equals(t.type))
+                .findFirst()
+                .orElseThrow();
+        assertNotNull(sellTx.sharesAfter);
+        assertEquals(0, sellTx.sharesAfter.intValue());
+        assertTrue(sellTx.isPositionClosed());
+        assertNull(service.getPosition("GOOGL"));
+    }
+
+    @Test
+    public void transactionListShowsUpdatedShareCountAfterEachTransaction() {
+        service.buy("MSFT", 10, 300.0);
+        service.sell("MSFT", 3, 310.0);
+        service.sell("MSFT", 4, 305.0);
+
+        List<InvestmentTransaction> history = service.getHistory();
+        assertEquals(3, history.size());
+        assertEquals(10, history.get(0).sharesAfter.intValue());
+        assertEquals(7, history.get(1).sharesAfter.intValue());
+        assertEquals(3, history.get(2).sharesAfter.intValue());
+        assertFalse(history.get(1).isPositionClosed());
+        assertFalse(history.get(2).isPositionClosed());
+    }
+
+    @Test
+    public void sellThatClosesPositionMarksPositionClosed() {
+        service.buy("AAPL", 4, 100.0);
+        service.sell("AAPL", 4, 105.0);
+
+        InvestmentTransaction sellTx = service.getHistory().stream()
+                .filter(t -> "SELL".equals(t.type))
+                .findFirst()
+                .orElseThrow();
+        assertTrue(sellTx.isPositionClosed());
+        assertEquals(0, sellTx.sharesAfter.intValue());
+    }
+
+    // ===== newTransaction(): check funds, take money, update shares, return success/unsuccess (§1; still process when insufficient) =====
+
+    @Test
+    public void newTransactionWithValidArgsReturnsSuccessAndUpdatesPosition() {
+        PurchaseResult result = service.newTransaction("AAPL", 10, 150.0);
+
+        assertTrue(result.success);
+        assertEquals("Transaction successful.", result.message);
+        assertEquals("AAPL", result.ticker);
+        assertEquals(10, result.shares);
+        assertEquals(150.0, result.price, 0.01);
+        assertTrue(result.totalCostGbp.contains("1,500") || result.totalCostGbp.contains("1500"));
+        assertEquals(100000 - 1500, result.balanceAfter);
+        assertEquals(1, service.getHistory().size());
+        Position p = service.getPosition("AAPL");
+        assertNotNull(p);
+        assertEquals(10, p.shares);
+    }
+
+    @Test
+    public void newTransactionWithInsufficientFundsStillProcessesPerRequirements() {
+        account.withdraw(100000 - 500); // balance 500 (setUp deposited 100000)
+        PurchaseResult result = service.newTransaction("MSFT", 10, 100.0); // cost 1000
+
+        assertTrue(result.success);
+        assertEquals("Transaction successful.", result.message);
+        assertEquals(500 - 1000, result.balanceAfter);
+        Position p = service.getPosition("MSFT");
+        assertNotNull(p);
+        assertEquals(10, p.shares);
+        assertEquals(1, service.getHistory().size());
+    }
+
+    @Test
+    public void newTransactionWithInvalidTickerReturnsUnsuccessful() {
+        PurchaseResult result = service.newTransaction("INVALID12", 10, 150.0);
+
+        assertFalse(result.success);
+        assertTrue(result.message.contains("Ticker") || result.message.contains("1–5"));
+        assertEquals(0, service.getHistory().size());
+        assertEquals(100000, account.getBalance());
+    }
+
+    @Test
+    public void newTransactionWithZeroSharesReturnsUnsuccessful() {
+        PurchaseResult result = service.newTransaction("AAPL", 0, 150.0);
+
+        assertFalse(result.success);
+        assertTrue(result.message.contains("positive"));
+        assertEquals(0, service.getHistory().size());
+    }
+
+    @Test
+    public void buyWithInsufficientFundsLogsWarningAndStillProcesses() {
+        account.withdraw(100000 - 200); // balance 200 (setUp deposited 100000)
+        service.buy("AAPL", 5, 100.0); // cost 500, balance 200 -> -300
+
+        assertEquals(1, service.getHistory().size());
+        Position p = service.getPosition("AAPL");
+        assertNotNull(p);
+        assertEquals(5, p.shares);
+        assertEquals(-300, account.getBalance());
     }
 
 }
