@@ -99,3 +99,38 @@ input[type=number]::-webkit-outer-spin-button {
 input[type=number] {
     -moz-appearance: textfield;
 }
+
+/* NEW: button-style links for dashboard */
+.btn {
+    background-color: var(--accent);
+    color: white;
+    padding: 12px 22px;
+    border-radius: 6px;
+    font-weight: 600;
+    text-decoration: none;
+    display: inline-block;
+    transition: background 0.2s;
+}
+
+.btn:hover {
+    background-color: var(--accent-hover);
+}
+
+/* NEW: history table styling */
+.history-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 1.5rem;
+    font-size: 0.95rem;
+}
+
+.history-table th,
+.history-table td {
+    padding: 8px;
+    border-bottom: 1px solid var(--border);
+    text-align: left;
+}
+
+.history-table tr:nth-child(even) {
+    background: var(--bg-surface);
+}
