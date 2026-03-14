@@ -1,14 +1,12 @@
 package uk.co.asepstrath.bank.investments;
 
-/**
- * Response for GET /investments/portfolio/summary (§3 – portfolio-level evaluation).
- * Total portfolio value = sum of all position current values + cash balance.
- */
+// response for GET /investments/portfolio/summary
+// total portfolio val = sum of all pos current values + cash balance
+
 public class PortfolioSummaryResponse {
-    /** Total portfolio value = positionsValue + cashBalance. */
+    // total portfolio value = positionsValue + cashBalance
     public double totalPortfolioValue;
-    /** Sum of current values of all positions (shares × latest price). */
+    // sum of current vals of all pos (shares × latest price)
     public double positionsValue;
-    /** Cash balance. */
     public int cashBalance;
 }

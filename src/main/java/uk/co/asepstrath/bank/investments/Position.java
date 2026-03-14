@@ -8,14 +8,14 @@ public class Position {
     public int shares;
     public int averageBookPrice;
     public int totalInvested;
-    /** Stock name from equities (set when positions list is built; fallback to ticker if not resolved). */
+    // stock name from equities (set when positions list is built, fallback to ticker if not resolved
     public String stockName;
-    /** Latest price per share at time of request (from /api/prices); null if not available. */
+    // price per share at time of request (from /api/prices), null if not available
     public Double currentPrice;
-    /** Current value = shares × currentPrice; null if currentPrice not available. */
+    // current value = shares × currentPrice. null if currentPrice not available
     public Double currentValue;
 
-    /** Average purchase price per share (from BUYs only), formatted in GBP for display. */
+    // avg price per share (from BUYs only), formatted in gbp
     public String getAveragePurchasePriceGbp() {
         return NumberFormat.getCurrencyInstance(Locale.UK).format(averageBookPrice);
     }
@@ -25,7 +25,7 @@ public class Position {
         return NumberFormat.getCurrencyInstance(Locale.UK).format(totalInvested);
     }
 
-    /** Current value (shares × latest price) formatted in GBP; "—" if not available. */
+    // value (shares × latest price) formatted in GBP; "—" if not available
     public String getCurrentValueGbp() {
         if (currentValue == null) {
             return "—";
@@ -33,12 +33,12 @@ public class Position {
         return NumberFormat.getCurrencyInstance(Locale.UK).format(currentValue);
     }
 
-    /** Book value = shares × average book price (§3 Unrealized P&L). */
+    // book value = shares × average book price ( Unrealized p&l)
     public int getBookValue() {
         return shares * averageBookPrice;
     }
 
-    /** Unrealized P&L = current value − book value; null if currentValue not available (§3). */
+    // unrealized P&L = current value − book value; null if currentValue not available
     public Double getUnrealizedPnL() {
         if (currentValue == null) {
             return null;
@@ -46,7 +46,7 @@ public class Position {
         return currentValue - getBookValue();
     }
 
-    /** Unrealized P&L % = (P&L / book value) × 100; null if book value ≤ 0 or currentValue not available (§3). */
+    // unrealized p&l % = (p&l / book value) × 100; null if book value <= 0 or no currentVal
     public Double getUnrealizedPnLPercent() {
         if (currentValue == null) {
             return null;

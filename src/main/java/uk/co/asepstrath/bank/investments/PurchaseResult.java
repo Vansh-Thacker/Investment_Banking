@@ -1,9 +1,8 @@
 package uk.co.asepstrath.bank.investments;
 
-/**
- * Result of a buy (newTransaction): success/failure and message for immediate user notification.
- * When successful, includes transaction details and balance after (§1 BUY, §2 cash integration).
- */
+// result of buy, success/failure and message for immediate user notification.
+// when successfull, includes transaction details and bal after
+
 public class PurchaseResult {
     public boolean success;
     public String message;

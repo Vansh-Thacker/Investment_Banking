@@ -56,11 +56,8 @@ public class InvestmentService {
         record(TYPE_BUY, ticker, shares, price, position.shares);
     }
 
-    /**
-     * User-facing buy: validates ticker/shares/price, checks funds (logs WARNING if insufficient per §1),
-     * takes money, updates shares, records transaction, returns success/unsuccess message.
-     * Per requirements, insufficient cash still processes (warning logged).
-     */
+    // buy: validates ticker/shares/price, checks funds (logs warning if insufficient per reqs),
+    // takes money, updates shares, records transaction, returns success/unsuccess message
     public PurchaseResult newTransaction(String ticker, int shares, double price) {
         PurchaseResult result = new PurchaseResult();
         if (ticker == null || ticker.isBlank()) {

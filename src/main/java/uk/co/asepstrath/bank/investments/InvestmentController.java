@@ -112,7 +112,7 @@ public class InvestmentController {
         return result;
     }
 
-    // buy stocks: checks funds (per §1 logs WARNING if insufficient but still processes), takes money, updates shares, returns result
+    // buy stocks checks funds and takes money, updates shares, returns result
     @POST("/buy")
     public Object buy(TradeRequest request, Context ctx) {
         String ticker = normalizeTicker(request.ticker, ctx);

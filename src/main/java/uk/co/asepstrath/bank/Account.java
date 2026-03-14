@@ -16,7 +16,7 @@ public class Account {
         balance -= amount;
     }
 
-    /** Deduct amount even if balance would go negative (§1: log WARNING but still process). */
+    // remove amount even if balance would go negative as stated in newish user reqs
     public void withdrawAllowNegative(int amount) {
         if (amount <= 0) throw new IllegalArgumentException("must be positive");
         balance -= amount;

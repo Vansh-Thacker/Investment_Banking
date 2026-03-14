@@ -16,7 +16,7 @@ public class InvestmentTransaction {
     public Double realizedGainLoss;
     // shares owned in this ticker after this transaction (for transaction list) 0 = position closed
     public Integer sharesAfter;
-    // stock name from equities (set when transaction list is built; fallback to ticker if not resolved)
+    // stock name from equities (set when transaction list is built, fallback to ticker if not resolved)
     public String stockName;
 
     // true when transaction closed the position
@@ -34,7 +34,7 @@ public class InvestmentTransaction {
     }
 
     
-    //signed value for t_earnings. display + for SELL, - for BUY
+    // signed value for t_earnings. display + for SELL, - for BUY
     public double getTotalEarningsSigned() {
         if ("SELL".equals(type) && proceeds > 0) {
             return proceeds;
@@ -47,13 +47,13 @@ public class InvestmentTransaction {
     }
 
     
-    //total earnings in gbp, formatted with sign: - for BUY (e.g. -£1,500.00), + for SELL (e.g. £1,550.00)
+    // total earnings in gbp, formatted with - for BUY and + for SELL
     
     public String getTotalEarningsGbp() {
         return NumberFormat.getCurrencyInstance(Locale.UK).format(getTotalEarningsSigned());
     }
 
-    /** No. of shares with sign: + for BUY, - for SELL (for transaction list display). */
+    // no. of shares with sign: + for BUY, - for SELL (for transaction list display)
     public int getSharesSigned() {
         if ("SELL".equals(type)) {
             return shares <= 0 ? 0 : -shares;
@@ -61,7 +61,7 @@ public class InvestmentTransaction {
         return shares <= 0 ? 0 : shares;
     }
 
-    /** Price per share at execution, formatted in GBP. */
+    // Price per share at execution, formatted in gbp
     public String getPricePerShareGbp() {
         if (price <= 0) {
             return NumberFormat.getCurrencyInstance(Locale.UK).format(0.0);
