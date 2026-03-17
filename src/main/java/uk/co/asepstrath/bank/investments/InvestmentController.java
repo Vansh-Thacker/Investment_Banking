@@ -40,7 +40,7 @@ public class InvestmentController {
     }
 
     /** For tests: use provided service instead of creating one (same package). */
-    InvestmentController(DataSource ds, Logger log, Account account, PriceService priceService, EquitiesService equitiesService, InvestmentService service) {
+    public InvestmentController(DataSource ds, Logger log, Account account, PriceService priceService, EquitiesService equitiesService, InvestmentService service) {
         this.service = service;
         this.log = log;
         this.priceService = priceService;
