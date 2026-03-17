@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <link rel="stylesheet" href="/assets/style.css">
+    <title>Titan Invest | Capital Gains</title>
+</head>
+<body>
+
+<nav class="top-nav">
+    <a href="/cash/cashsidefrontend">Home</a>
+    <a href="/investments/positions">Investments</a>
+    <a href="/capitalgains/summary" class="active">Capital Gains</a>
+    <a href="/logout">Logout</a>
+</nav>
+
+<div class="page-container">
+
+    <h1>Capital Gains Summary</h1>
+
+    <div class="card">
+        <form method="get" action="/capitalgains/summary" class="year-selector">
+            <label for="year">Tax Year:</label>
+                <select name="year" id="year">
+                    {{#each years}}
+                        <option value="{{startYear}}" {{#if selected}}selected{{/if}}>
+                            {{label}}
+                        </option>
+                    {{/each}}
+                </select>
+            <button type="submit">View</button>
+        </form>
+    </div>
+
+    <div class="card summary-grid">
+        <div class="summary-item">
+            <span class="label">Total Gains</span>
+            <span class="value">£{{totalGains}}</span>
+        </div>
+        <div class="summary-item">
+            <span class="label">Total Losses</span>
+            <span class="value">£{{totalLosses}}</span>
+        </div>
+        <div class="summary-item">
+            <span class="label">Net Gain</span>
+            <span class="value">£{{netGain}}</span>
+        </div>
+        <div class="summary-item">
+            <span class="label">Allowance Used</span>
+            <span class="value">£{{allowanceUsed}}</span>
+        </div>
+        <div class="summary-item">
+            <span class="label">Allowance Remaining</span>
+            <span class="value">£{{allowanceRemaining}}</span>
+        </div>
+        <div class="summary-item">
+            <span class="label">Taxable Gain</span>
+            <span class="value">£{{taxableGain}}</span>
+        </div>
+        <div class="summary-item">
+            <span class="label">Tax Rate</span>
+            <span class="value">{{taxRate}}%</span>
+        </div>
+        <div class="summary-item">
+            <span class="label">Tax Owed</span>
+            <span class="value">£{{taxOwed}}</span>
+        </div>
+    </div>
+
+    <div class="card">
+        <h2>Realised Transactions</h2>
+
+        {{#if transactions.length}}
+            <table class="styled-table">
+                <thead>
+                    <tr>
+                        <th>Date</th>
+                        <th>Ticker</th>
+                        <th>Shares</th>
+                        <th>Buy Price</th>
+                        <th>Sell Price</th>
+                        <th>Gain/Loss</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {{#each transactions}}
+                        <tr>
+                            <td>{{date}}</td>
+                            <td>{{ticker}}</td>
+                            <td>{{shares}}</td>
+                            <td>£{{buyPrice}}</td>
+                            <td>£{{sellPrice}}</td>
+                            <td class="{{#if gainPositive}}gain{{else}}loss{{/if}}">
+                                £{{gain}}
+                            </td>
+                        </tr>
+                    {{/each}}
+                </tbody>
+            </table>
+        {{else}}
+            <p class="empty-message">No realised gains or losses for this tax year.</p>
+        {{/if}}
+    </div>
+
+</div>
+</body>
+</html>
