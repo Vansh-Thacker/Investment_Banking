@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <link rel="stylesheet" href="/assets/auth.css">
+    <title>Sign Up</title>
+</head>
+<body class="auth-page">
+
+<nav class="top-nav">
+    <a href="/login">Log in</a>
+</nav>
+
+<section id="signup" class="auth-form">
+    <h2>Create Account</h2>
+
+    {{#if error}}
+        <p style="color:red;">{{error}}</p>
+    {{/if}}
+
+    <form id="signupForm" action="/signup" method="post">
+        <div>
+            <label for="username">Username</label>
+            <input type="text" id="username" name="username" required />
+        </div>
+        <div>
+            <label for="password">Password</label>
+            <input type="password" id="password" name="password" required />
+        </div>
+        <button type="submit">Sign Up</button>
+    </form>
+
+    <p>Already have an account? <a href="/login">Log in here</a>.</p>
+</section>
+
+</body>
+</html>

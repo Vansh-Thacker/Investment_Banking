@@ -7,15 +7,18 @@ import io.jooby.netty.NettyServer;
 import uk.co.asepstrath.bank.cash.CashController;
 import uk.co.asepstrath.bank.Account;
 import uk.co.asepstrath.bank.cash.CashController_;
-//import uk.co.asepstrath.bank.evaluation.EvaluationController;
-//import uk.co.asepstrath.bank.example.ExampleController;
-//import uk.co.asepstrath.bank.investments.InvestmentController;
+import uk.co.asepstrath.bank.evaluation.EvaluationController;
+//import uk.co.asepstrath.bank.evaluation.EvaluationController_;
+import uk.co.asepstrath.bank.investments.InvestmentController;
+import uk.co.asepstrath.bank.investments.InvestmentController_;
 import io.jooby.Jooby;
 import io.jooby.handlebars.HandlebarsModule;
 import io.jooby.helper.UniRestExtension;
 import io.jooby.hikari.HikariModule;
 import org.slf4j.Logger;
-import uk.co.asepstrath.bank.example.ExampleController_;
+import uk.co.asepstrath.bank.user.LoginController;
+import uk.co.asepstrath.bank.user.LoginController_;
+import uk.co.asepstrath.bank.user.UserService;
 
 import javax.sql.DataSource;
 import java.sql.Connection;
@@ -45,9 +48,34 @@ public class App extends Jooby {
         Now we set up our controllers and their dependencies
          */
         //DataSource ds = require(DataSource.class);
+
+
+
+        /*  // Commented out previous controller stuff
         Logger log = getLog();
 
         mvc(new CashController_(log, new Account())); // the new controllers
+        mvc(new LoginController_(log, new UserService())); // the new controllers
+        */
+
+
+        Logger log = getLog();
+
+        UserService users = new UserService();
+        Account account = new Account();
+
+        // Create controller manually
+        CashController cash = new CashController(log, account);
+
+        // Inject UserService
+        cash.setUserService(users);
+
+        // Register it with Jooby
+        mvc(new CashController_(cash));
+        mvc(new LoginController_(log, users));
+
+
+
         //mvc(new InvestmentController(ds, log));
         //mvc(new EvaluationController(ds, log));
 
