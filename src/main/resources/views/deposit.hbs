@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <link rel="stylesheet" href="/assets/style.css">
+    <title>Deposit</title>
+</head>
+
+<body class="auth-page">
+
+<nav class="top-nav">
+    <a href="/cash/cashsidefrontend">Home</a>
+    <a href="/logout">Logout</a>
+</nav>
+
+<section class="auth-form">
+    <h2>Deposit Funds</h2>
+
+    <form id="depositForm" action="/cash/deposit" method="get">
+        <label>Amount (£)</label>
+        <input name="amount" id="deposit-amount" type="number" step="0.01" required>
+        <button type="submit">Deposit</button>
+    </form>
+</section>
+
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+    const form = document.getElementById('depositForm');
+    form.addEventListener('submit', function (e) {
+        const input = document.getElementById('deposit-amount');
+        const val = parseFloat(input.value);
+        if (isNaN(val) || val <= 0) {
+            e.preventDefault();
+            alert('Enter positive amount');
+            return;
+        }
+        input.value = Math.round(val * 100); // pounds → pence
+    });
+});
+</script>
+
+</body>
+</html>

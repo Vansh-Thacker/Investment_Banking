@@ -17,14 +17,26 @@ public class CashService {
     private final List<CashTransaction> history = new ArrayList<>();
     private final String csv_path;
 
-    //construvtor for tests
+    // constructor for tests (default global file)
     public CashService(Account account) {
         this(account, "cashTransactionHistory.csv");
     }
-    //constructor
+
+    // main constructor (can be used with per-user paths)
     public CashService(Account account, String csvPath) {
         this.account = account;
         this.csv_path = csvPath;
+
+        // Ensure parent directory exists (for per-user paths like UserStats/<user>/...)
+        try {
+            Path p = Paths.get(csv_path).getParent();
+            if (p != null) {
+                Files.createDirectories(p);
+            }
+        } catch (IOException e) {
+            throw new RuntimeException("Failed to create directories for " + csv_path, e);
+        }
+
         loadHistoryFromCSV();
     }
 
@@ -66,15 +78,15 @@ public class CashService {
                 history.add(tx);
             }
 
-            // reorder list from oldesr to newest
+            // reorder list from oldest to newest
             history.sort(Comparator.comparing(CashTransaction::getDateTime));
 
         } catch (Exception e) {
-            throw new RuntimeException("Failed to load cashTransactionHistory.csv", e);
+            throw new RuntimeException("Failed to load " + csv_path, e);
         }
     }
 
-    //wruting to csv after changes
+    // writing to csv after changes
     private void writeHistoryToCsv() {
         try (PrintWriter writer = new PrintWriter(new FileWriter(csv_path))) {
 
@@ -91,13 +103,13 @@ public class CashService {
             }
 
         } catch (IOException e) {
-            throw new RuntimeException("Failed to write cashTransactionHistory.csv", e);
+            throw new RuntimeException("Failed to write " + csv_path, e);
         }
     }
 
 
     public void deposit(int amount) {
-        if (amount<= 0) {throw new IllegalArgumentException("Deposit must be positive");}
+        if (amount <= 0) { throw new IllegalArgumentException("Deposit must be positive"); }
         CashTransaction transac = new CashTransaction(amount, "DEPOSIT", account.getBalance());
         history.add(transac);
         account.deposit(amount);
@@ -113,10 +125,9 @@ public class CashService {
         history.add(transac);
         account.withdraw(amount);
         writeHistoryToCsv();
-
     }
 
-    public int getBalance() {return account.getBalance();}
+    public int getBalance() { return account.getBalance(); }
 
     public List<CashTransaction> getHistory() {
         return history;

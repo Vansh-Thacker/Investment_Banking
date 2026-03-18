@@ -1,0 +1,68 @@
+:root {
+    --bg-deep: #0f172a;
+    --bg-surface: #1e293b;
+    --accent: #3b82f6;
+    --text-primary: #f8fafc;
+    --text-secondary: #94a3b8;
+    --border: #334155;
+}
+
+body.auth-page {
+    display: flex;
+    justify-content: center;
+    align-items: flex-start;
+    min-height: 100vh;
+    background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%);
+    padding-top: 60px;
+    margin: 0;
+}
+
+.top-nav {
+    position: absolute;
+    top: 16px;
+    left: 16px;
+}
+
+.top-nav a {
+    color: var(--accent);
+    text-decoration: none;
+    margin-right: 12px;
+    font-weight: 600;
+}
+
+.auth-form {
+    width: 700px;
+    background: #0f172a;
+    padding: 2rem;
+    border-radius: 16px;
+    border: 1px solid var(--border);
+    box-shadow: 0 10px 30px rgba(0,0,0,0.6);
+}
+
+.auth-form h2 {
+    color: var(--text-primary);
+    margin-bottom: 1.5rem;
+    text-align: center;
+}
+
+.history-table {
+    width: 100%;
+    border-collapse: collapse;
+    color: var(--text-primary);
+}
+
+.history-table th {
+    text-align: left;
+    padding: 10px;
+    background: var(--bg-surface);
+    border-bottom: 2px solid var(--border);
+}
+
+.history-table td {
+    padding: 10px;
+    border-bottom: 1px solid var(--border);
+}
+
+.history-table tr:nth-child(even) {
+    background: #1b2536;
+}

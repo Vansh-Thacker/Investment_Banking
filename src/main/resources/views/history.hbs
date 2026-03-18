@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <link rel="stylesheet" href="/assets/history.css">
+    <title>Transaction History</title>
+</head>
+
+<body class="auth-page">
+
+<nav class="top-nav">
+    <a href="/cash/cashsidefrontend">Home</a>
+    <a href="/logout">Logout</a>
+</nav>
+
+<section class="auth-form">
+    <h2>Transaction History</h2>
+
+    <table class="history-table">
+        <tr>
+            <th>Date</th>
+            <th>Type</th>
+            <th>Amount (£)</th>
+            <th>Balance After (£)</th>
+        </tr>
+
+        {{#each history}}
+        <tr>
+            <td>{{dateTime}}</td>
+            <td>{{type}}</td>
+            <td class="amount-cell">{{amount}}</td>
+            <td class="balance-cell">{{balanceAfter}}</td>
+        </tr>
+        {{/each}}
+    </table>
+</section>
+
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+    function convert(selector) {
+        document.querySelectorAll(selector).forEach(cell => {
+            const raw = cell.textContent.trim();
+            const pence = parseInt(raw || "0", 10);
+            cell.textContent = (pence / 100).toFixed(2);
+        });
+    }
+
+    convert('.amount-cell');
+    convert('.balance-cell');
+});
+</script>
+
+</body>
+</html>
