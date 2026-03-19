@@ -5,86 +5,143 @@ import java.nio.file.*;
 import java.util.*;
 
 public class UserService {
-    private final String csvPath;
+
+    private final Path csvPath = Path.of("users.csv");
     private final Map<String, User> users = new HashMap<>();
 
-    public UserService() {
-        this("users.csv");
-    }
+    // File storing the last used hex ID
+    private static final String LAST_ID_FILE = "UserStats/lastId.txt";
 
-    public UserService(String csvPath) {
-        this.csvPath = csvPath;
+    public UserService() {
         loadUsers();
     }
 
     private void loadUsers() {
         try {
-            Path path = Paths.get(csvPath);
-            if (!Files.exists(path)) return;
+            if (!Files.exists(csvPath)) return;
 
-            List<String> lines = Files.readAllLines(path);
-            for (String line : lines) {
-                String[] p = line.split(",");
-                if (p.length != 3) continue;
+            List<String> lines = Files.readAllLines(csvPath);
 
-                String username = p[0];
-                String password = p[1];
-                int balance = Integer.parseInt(p[2]);
+            // Skip header
+            for (int i = 1; i < lines.size(); i++) {
+                String[] p = lines.get(i).split(",", -1);
+                if (p.length != 4) continue;
 
-                users.put(username, new User(username, password, balance));
+                String id = p[0];
+                String name = p[1];
+                String password = p[2]; // plain text
+                int balance = Integer.parseInt(p[3]);
+
+                users.put(id, new User(id, name, password, balance));
             }
+
         } catch (Exception e) {
             throw new RuntimeException("Failed to load users.csv", e);
         }
     }
 
     private void saveUsers() {
-        try (PrintWriter out = new PrintWriter(new FileWriter(csvPath))) {
+        try (PrintWriter out = new PrintWriter(Files.newBufferedWriter(csvPath))) {
+            out.println("id,name,passwordHash,balancePence");
+
             for (User u : users.values()) {
-                out.println(u.getUsername() + "," + u.getPassword() + "," + u.getBalance());
+                out.printf("%s,%s,%s,%d%n",
+                        u.getId(),
+                        u.getName(),
+                        u.getPassword(),
+                        u.getBalancePence()
+                );
             }
+
         } catch (IOException e) {
             throw new RuntimeException("Failed to write users.csv", e);
         }
     }
 
-    public boolean usernameExists(String username) {
-        return users.containsKey(username);
+    public User findByName(String name) {
+        return users.values().stream()
+                .filter(u -> u.getName().equalsIgnoreCase(name))
+                .findFirst()
+                .orElse(null);
     }
 
-    public void createUser(String username, String password) {
-        if (usernameExists(username)) {
+    public User findById(String id) {
+        return users.get(id);
+    }
+
+    public boolean nameExists(String name) {
+        return findByName(name) != null;
+    }
+
+    // ⭐ NEW: createUser now uses the hex ID generator
+    public User createUser(String name, String password) {
+        if (nameExists(name)) {
             throw new IllegalArgumentException("Username already exists");
         }
 
-        User u = new User(username, password, 0);
-        users.put(username, u);
+        String id = generateNextId();   // ⭐ Use hex ID
+
+        User u = new User(id, name, password, 0);
+
+        users.put(id, u);
         saveUsers();
+
+        return u;
     }
 
-    public User authenticate(String username, String password) {
-        User u = users.get(username);
-        if (u == null) return null;
-
-        if (u.getPassword().equals(password)) {
-            return u;
-        }
-        return null;
-    }
-
-    public int getBalance(String username) {
-        User u = users.get(username);
-        if (u == null) {
-            return 0; // default if somehow missing
-        }
-        return u.getBalance();
-    }
-
-    public void updateBalance(String username, int newBalance) {
-        User u = users.get(username);
+    public void updateBalance(String id, int newBalance) {
+        User u = users.get(id);
         if (u != null) {
-            u.setBalance(newBalance);
+            u.setBalancePence(newBalance);
             saveUsers();
         }
+    }
+
+    // Hex ID generator stored in UserStats/lastId.txt
+    private String generateNextId() {
+        try {
+            Path path = Paths.get(LAST_ID_FILE);
+
+            // Ensure directory exists
+            Files.createDirectories(path.getParent());
+
+            int last = 0x4f; // default: next will be 50
+
+            if (Files.exists(path)) {
+                String hex = Files.readString(path).trim();
+                if (!hex.isEmpty()) {
+                    last = Integer.parseInt(hex, 16);
+                }
+            }
+
+            int next = last + 1;
+
+            // ⭐ lowercase hex, padded to 4 digits (e.g., 0050)
+            String hexPart = String.format("%04x", next);
+
+            // Save new ID
+            Files.writeString(path, hexPart);
+
+            // ⭐ Generate random tail
+            String random4 = randomHex(4);
+            String random12 = randomHex(12);
+
+            // ⭐ Final ID format
+            return "00000000-0000-" + hexPart + "-" + random4 + "-" + random12;
+
+        } catch (Exception e) {
+            throw new RuntimeException("Failed to generate user ID", e);
+        }
+    }
+
+
+    // Helper function for generate next id
+    private String randomHex(int length) {
+        StringBuilder sb = new StringBuilder();
+        Random r = new Random();
+        for (int i = 0; i < length; i++) {
+            sb.append(Integer.toHexString(r.nextInt(16)));
+        }
+        return sb.toString();
     }
 }

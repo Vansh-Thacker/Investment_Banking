@@ -20,16 +20,16 @@
         <tr>
             <th>Date</th>
             <th>Type</th>
+            <th>Ticker</th>
             <th>Amount (£)</th>
-            <th>Balance After (£)</th>
         </tr>
 
         {{#each history}}
         <tr>
             <td>{{dateTime}}</td>
             <td>{{type}}</td>
+            <td>{{ticker}}</td>
             <td class="amount-cell">{{amount}}</td>
-            <td class="balance-cell">{{balanceAfter}}</td>
         </tr>
         {{/each}}
     </table>
@@ -46,7 +46,6 @@ document.addEventListener('DOMContentLoaded', function () {
     }
 
     convert('.amount-cell');
-    convert('.balance-cell');
 });
 </script>
 
