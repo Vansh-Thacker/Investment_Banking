@@ -28,18 +28,17 @@ public class CashTransactionTest {
         assertEquals(300, tx.getAmount());
         assertEquals("WITHDRAWAL", tx.getType());
     }
-    /*
+    
     @Test //does csv loading work correctly
     void testCsvConstructor() {
         LocalDateTime time = LocalDateTime.of(2024, 1, 1, 10, 0);
 
-        CashTransaction tx = new CashTransaction(time, "DEPOSIT", 200, 1200);
+        CashTransaction tx = new CashTransaction(time, "DEPOSIT","TICKER", 200);
 
         assertEquals(time, tx.getDateTime());
         assertEquals("DEPOSIT", tx.getType());
         assertEquals(200, tx.getAmount());
-        assertEquals(1200, tx.getBalanceAfter());
-    }*/
+    }
 
     @Test // does the getter return the correct amount
     void testGetAmount() {

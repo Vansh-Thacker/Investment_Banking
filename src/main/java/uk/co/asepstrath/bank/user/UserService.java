@@ -73,13 +73,13 @@ public class UserService {
         return findByName(name) != null;
     }
 
-    // ⭐ NEW: createUser now uses the hex ID generator
+    // createUser now uses the hex ID generator
     public User createUser(String name, String password) {
         if (nameExists(name)) {
             throw new IllegalArgumentException("Username already exists");
         }
 
-        String id = generateNextId();   // ⭐ Use hex ID
+        String id = generateNextId();   // Use hex ID
 
         User u = new User(id, name, password, 0);
 
@@ -116,17 +116,17 @@ public class UserService {
 
             int next = last + 1;
 
-            // ⭐ lowercase hex, padded to 4 digits (e.g., 0050)
+            // lowercase hex, padded to 4 digits (e.g., 0050)
             String hexPart = String.format("%04x", next);
 
             // Save new ID
             Files.writeString(path, hexPart);
 
-            // ⭐ Generate random tail
+            // Generate random tail
             String random4 = randomHex(4);
             String random12 = randomHex(12);
 
-            // ⭐ Final ID format
+            // Final ID format
             return "00000000-0000-" + hexPart + "-" + random4 + "-" + random12;
 
         } catch (Exception e) {
