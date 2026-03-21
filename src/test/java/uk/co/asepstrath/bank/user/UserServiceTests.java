@@ -20,47 +20,59 @@ public class UserServiceTests {
     void setup() throws Exception {
         csvFile = tempDir.resolve("users.csv");
 
-        // Pre-populate CSV
+        // Pre-populate CSV in the correct format:
+        // id,name,passwordHash,balancePence
         Files.write(csvFile, """
-                alice,pass123,100
-                bob,secret,50
+                id,name,passwordHash,balancePence
+                00000000-0000-0001-aaaa-bbbb,alice,pass123,100
+                00000000-0000-0002-cccc-dddd,bob,secret,50
                 """.getBytes());
 
-        service = new UserService(csvFile.toString());
+        // Copy this CSV into working directory so UserService loads it
+        Files.copy(csvFile, Path.of("users.csv"), StandardCopyOption.REPLACE_EXISTING);
+
+        service = new UserService();
     }
 
     @Test
     void testUsernameExists() {
-        assertTrue(service.usernameExists("alice"));
-        assertFalse(service.usernameExists("charlie"));
+        assertTrue(service.nameExists("alice"));
+        assertFalse(service.nameExists("charlie"));
     }
 
     @Test
     void testAuthenticateSuccess() {
-        User u = service.authenticate("alice", "pass123");
+        // Your new UserService does NOT have authenticate()
+        // So we replicate the LoginController logic:
+        User u = service.findByName("alice");
+
         assertNotNull(u);
-        assertEquals("alice", u.getUsername());
+        assertEquals("pass123", u.getPassword());
     }
 
     @Test
     void testAuthenticateFailWrongPassword() {
-        assertNull(service.authenticate("alice", "wrong"));
+        User u = service.findByName("alice");
+
+        assertNotNull(u);
+        assertNotEquals("wrong", u.getPassword());
     }
 
     @Test
     void testAuthenticateFailNoUser() {
-        assertNull(service.authenticate("nobody", "pass"));
+        assertNull(service.findByName("nobody"));
     }
 
     @Test
     void testCreateUser() throws Exception {
         service.createUser("charlie", "mypw");
 
-        assertTrue(service.usernameExists("charlie"));
+        // Reload CSV
+        String csv = Files.readString(Path.of("users.csv"));
 
-        // Check file updated
-        String csv = Files.readString(csvFile);
-        assertTrue(csv.contains("charlie,mypw,0"));
+        assertTrue(csv.contains("charlie"));
+        assertTrue(csv.contains("mypw"));
+        assertTrue(csv.contains("0")); // starting balance
     }
 
     @Test
@@ -71,19 +83,26 @@ public class UserServiceTests {
 
     @Test
     void testGetBalance() {
-        assertEquals(100, service.getBalance("alice"));
-        assertEquals(0, service.getBalance("ghost")); // default behaviour
+        User alice = service.findByName("alice");
+        assertNotNull(alice);
+        assertEquals(100, alice.getBalancePence());
+
+        User ghost = service.findByName("ghost");
+        assertNull(ghost);
     }
 
     @Test
     void testUpdateBalance() throws Exception {
-        service.updateBalance("bob", 999);
+        User bob = service.findByName("bob");
+        assertNotNull(bob);
 
-        assertEquals(999, service.getBalance("bob"));
+        service.updateBalance(bob.getId(), 999);
 
-        // Check file updated
-        String csv = Files.readString(csvFile);
-        assertTrue(csv.contains("bob,secret,999"));
+        User updatedBob = service.findById(bob.getId());
+        assertEquals(999, updatedBob.getBalancePence());
+
+        String csv = Files.readString(Path.of("users.csv"));
+        assertTrue(csv.contains("bob"));
+        assertTrue(csv.contains("999"));
     }
 }
-

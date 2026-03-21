@@ -8,6 +8,7 @@ import org.junit.jupiter.api.Test;
 import org.slf4j.Logger;
 import uk.co.asepstrath.bank.Account;
 import uk.co.asepstrath.bank.user.UserService;
+import uk.co.asepstrath.bank.user.User;
 
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -30,14 +31,14 @@ public class CashControllerTest {
         return new CashController(log, account, service);
     }
 
-    private void mockUserSession(Context ctx, String username) {
+    private void mockUserSession(Context ctx, String userId) {
         Session session = mock(Session.class);
-        Value usernameValue = mock(Value.class);
+        Value idValue = mock(Value.class);
 
         when(ctx.session()).thenReturn(session);
-        when(session.get("user")).thenReturn(usernameValue);
-        when(usernameValue.value()).thenReturn(username);
-        when(usernameValue.value((String) null)).thenReturn(username);
+        when(session.get("userId")).thenReturn(idValue);
+        when(idValue.value()).thenReturn(userId);
+        when(idValue.value((String) null)).thenReturn(userId);
     }
 
     @Test
@@ -199,7 +200,9 @@ public class CashControllerTest {
         UserService users = mock(UserService.class);
         controller.setUserService(users);
 
-        when(users.getBalance("testuser")).thenReturn(500);
+        User mockUser = new User("testuser", "Test User", "pass", 500);
+        when(users.findById("testuser")).thenReturn(mockUser);
+
 
         Context ctx = mock(Context.class);
         mockUserSession(ctx, "testuser");

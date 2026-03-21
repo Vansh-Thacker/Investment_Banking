@@ -20,20 +20,17 @@ public class LoginController {
         this.users = users;
     }
 
-    // --- GET pages moved from CashController ---
-
     @GET("/login")
     public ModelAndView showLogin(Context ctx) {
         Map<String, Object> model = new HashMap<>();
         model.put("name", "Customer");
 
-        // If already logged in → redirect to dashboard
-        String user = ctx.session().get("user").value((String) null);
-        if (user != null) {
+        // If already logged in, redirect
+        String userId = ctx.session().get("userId").value((String) null);
+        if (userId != null) {
             ctx.sendRedirect("/cash/cashsidefrontend");
             return null;
         }
-
 
         String error = ctx.query("error").value((String) null);
         model.put("error", error);
@@ -41,19 +38,17 @@ public class LoginController {
         return new ModelAndView("login.hbs", model);
     }
 
-
-   @GET("/signup")
+    @GET("/signup")
     public ModelAndView showSignup(Context ctx) {
         Map<String, Object> model = new HashMap<>();
         model.put("name", "Customer");
 
-        // If already logged in → redirect to dashboard
-        String user = ctx.session().get("user").value((String) null);
-        if (user != null) {
+        // If already logged in, redirect
+        String userId = ctx.session().get("userId").value((String) null);
+        if (userId != null) {
             ctx.sendRedirect("/cash/cashsidefrontend");
             return null;
         }
-
 
         String error = ctx.query("error").value((String) null);
         model.put("error", error);
@@ -61,25 +56,23 @@ public class LoginController {
         return new ModelAndView("signup.hbs", model);
     }
 
-
-    // --- POST login ---
-
     @POST("/login")
     public void login(Context ctx) {
         String username = ctx.form("username").value();
         String password = ctx.form("password").value();
 
-        User u = users.authenticate(username, password);
-        if (u == null) {
+        // Authenticate using plain-text password
+        User u = users.findByName(username);
+        if (u == null || !u.getPassword().equals(password)) {
             ctx.sendRedirect("/login?error=Invalid%20credentials");
             return;
         }
 
-        ctx.session().put("user", u.getUsername());
+        // Store only userId in session
+        ctx.session().put("userId", u.getId());
+
         ctx.sendRedirect("/cash/cashsidefrontend");
     }
-
-    // --- POST signup ---
 
     @POST("/signup")
     public void signup(Context ctx) {
@@ -93,8 +86,6 @@ public class LoginController {
             ctx.sendRedirect("/signup?error=" + e.getMessage());
         }
     }
-
-    // --- logout ---
 
     @GET("/logout")
     public void logout(Context ctx) {
