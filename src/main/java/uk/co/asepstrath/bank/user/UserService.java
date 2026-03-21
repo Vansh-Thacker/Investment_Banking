@@ -136,11 +136,12 @@ public class UserService {
 
 
     // Helper function for generate next id
+    private static final Random RNG = new Random();
+
     private String randomHex(int length) {
         StringBuilder sb = new StringBuilder();
-        Random r = new Random();
         for (int i = 0; i < length; i++) {
-            sb.append(Integer.toHexString(r.nextInt(16)));
+            sb.append(Integer.toHexString(RNG.nextInt(16)));
         }
         return sb.toString();
     }
