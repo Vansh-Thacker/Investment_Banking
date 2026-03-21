@@ -136,7 +136,7 @@ public class UserService {
 
 
     // Helper function for generate next id
-    private static final Random RNG = new Random();
+    private static final java.security.SecureRandom RNG = new java.security.SecureRandom();
 
     private String randomHex(int length) {
         StringBuilder sb = new StringBuilder();
