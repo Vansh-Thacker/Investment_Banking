@@ -5,55 +5,24 @@ import java.text.NumberFormat;
 import java.util.Locale;
 
 public class InvestmentTransaction {
+
     public LocalDateTime timestamp;
-    public String type; // BUY or SELL
+    public String type;          // BUY or SELL
     public String ticker;
-    public int shares;
-    public double price;
-    // proceeds from a sale (shares * price) set when type is sell
-    public double proceeds;
-    // realized gain/loss on SELL: sale proceeds
+    public int shares;           // always positive internally
+    public double price;         // price per share
+    public double proceeds;      // SELL only
     public Double realizedGainLoss;
-    // shares owned in this ticker after this transaction (for transaction list) 0 = position closed
     public Integer sharesAfter;
-    // stock name from equities (set when transaction list is built, fallback to ticker if not resolved)
     public String stockName;
 
-    // true when transaction closed the position
-    public boolean isPositionClosed() {
-        return "SELL".equals(type) && sharesAfter != null && sharesAfter == 0;
-    }
+    private static final NumberFormat GBP = NumberFormat.getCurrencyInstance(Locale.UK);
 
-    // total cost of trade (shares * price) formatted in gbp
-    public String getTotalCostGbp() {
-        if (shares <= 0 || price <= 0) {
-            return NumberFormat.getCurrencyInstance(Locale.UK).format(0.0);
-        }
-        double total = shares * price;
-        return NumberFormat.getCurrencyInstance(Locale.UK).format(total);
-    }
-
-    
-    // signed value for t_earnings. display + for SELL, - for BUY
-    public double getTotalEarningsSigned() {
-        if ("SELL".equals(type) && proceeds > 0) {
-            return proceeds;
-        }
-        if (shares <= 0 || price <= 0) {
-            return 0.0;
-        }
-        double amount = shares * price;
-        return "SELL".equals(type) ? amount : -amount;
-    }
-
-    
-    // total earnings in gbp, formatted with - for BUY and + for SELL
-    
-    public String getTotalEarningsGbp() {
-        return NumberFormat.getCurrencyInstance(Locale.UK).format(getTotalEarningsSigned());
-    }
-
-    // no. of shares with sign: + for BUY, - for SELL (for transaction list display)
+    /* ============================================================
+       SIGNED SHARES (HTML expects {{sharesSigned}})
+       BUY  -> +shares
+       SELL -> -shares
+       ============================================================ */
     public int getSharesSigned() {
         if ("SELL".equals(type)) {
             return shares <= 0 ? 0 : -shares;
@@ -61,11 +30,54 @@ public class InvestmentTransaction {
         return shares <= 0 ? 0 : shares;
     }
 
-    // Price per share at execution, formatted in gbp
+    /* ============================================================
+       PRICE PER SHARE (HTML expects {{pricePerShareGbp}})
+       ============================================================ */
     public String getPricePerShareGbp() {
-        if (price <= 0) {
-            return NumberFormat.getCurrencyInstance(Locale.UK).format(0.0);
+        if (price <= 0) return GBP.format(0.0);
+        return GBP.format(price);
+    }
+
+    /* ============================================================
+       TOTAL EARNINGS SIGNED (BUY negative, SELL positive)
+       HTML expects {{totalEarningsGbp}}
+       ============================================================ */
+    public double getTotalEarningsSigned() {
+        if ("SELL".equals(type)) {
+            return proceeds; // already shares * price
         }
-        return NumberFormat.getCurrencyInstance(Locale.UK).format(price);
+        if (shares <= 0 || price <= 0) return 0.0;
+        return -(shares * price); // BUY is negative
+    }
+
+    public String getTotalEarningsGbp() {
+        return GBP.format(getTotalEarningsSigned());
+    }
+
+    /* ============================================================
+       TOTAL COST (not used by your HTML but kept for completeness)
+       ============================================================ */
+    public String getTotalCostGbp() {
+        if (shares <= 0 || price <= 0) return GBP.format(0.0);
+        return GBP.format(shares * price);
+    }
+
+    /* ============================================================
+       POSITION CLOSED CHECK
+       ============================================================ */
+    public boolean isPositionClosed() {
+        return "SELL".equals(type) && sharesAfter != null && sharesAfter == 0;
+    }
+
+    public String getTimestampFormatted() {
+        return timestamp != null ? timestamp.toString() : "";
+    }
+
+    public String getType() {
+        return type;
+    }
+
+    public String getTicker() {
+        return ticker;
     }
 }

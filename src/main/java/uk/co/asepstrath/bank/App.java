@@ -48,19 +48,6 @@ public class App extends Jooby {
         assets("/assets/*", "/assets");
         assets("/service_worker.js","/service_worker.js");
 
-        /*
-        Now we set up our controllers and their dependencies
-         */
-        //DataSource ds = require(DataSource.class);
-
-
-
-        /*  // Commented out previous controller stuff
-        Logger log = getLog();
-
-        mvc(new CashController_(log, new Account())); // the new controllers
-        mvc(new LoginController_(log, new UserService())); // the new controllers
-        */
 
 
         Logger log = getLog();
@@ -82,7 +69,10 @@ public class App extends Jooby {
         PriceService priceService = new PriceService();
         EquitiesService equitiesService = new EquitiesService();
         InvestmentService investmentService = new InvestmentService(account);
-        mvc(new InvestmentController_(ds, log, account, priceService, equitiesService, investmentService));
+        InvestmentController investments =
+                new InvestmentController(ds, log, account, priceService, equitiesService, investmentService);
+        investments.setUserService(users);
+        mvc(new InvestmentController_(investments));
 
         String asepBaseUrl = System.getenv("ASEP_BASE_URL");
         if (asepBaseUrl == null || asepBaseUrl.isBlank()) {

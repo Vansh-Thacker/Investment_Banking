@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Titan Invest | Investment History</title>
+    <link rel="stylesheet" href="/assets/investments.css">
+</head>
+
+<body class="invest-page">
+
+<nav class="top-nav">
+    <a href="/cash/cashsidefrontend">Cash</a>
+    <a href="/investments/investmentsfrontend">Investments</a>
+    <a href="/logout">Logout</a>
+</nav>
+
+<section class="invest-container">
+    <h2>Investment History</h2>
+    <p class="subtitle">All your stock buys and sells, with prices and totals.</p>
+
+    <!-- FILTER -->
+    <div class="filter-row">
+        <label for="tickerFilter" style="color:#ffffff;">Filter by ticker:</label>
+        <input id="tickerFilter" type="text" placeholder="e.g. AAPL, HLN, TECHX">
+    </div>
+
+    <!-- HISTORY TABLE -->
+    <table id="historyTable" class="portfolio-table">
+        <thead>
+        <tr>
+            <th>Date</th>
+            <th>Type</th>
+            <th>Ticker</th>
+            <th>Shares</th>
+            <th>Price</th>
+            <th>Total</th>
+        </tr>
+        </thead>
+
+        <tbody>
+        {{#each transactions}}
+            <tr class="{{type}}-row" data-ticker="{{ticker}}">
+                <td>{{timestamp}}</td>
+                <td class="type-cell">{{type}}</td>
+                <td>{{ticker}}</td>
+                <td>{{sharesSigned}}</td>
+                <td>{{pricePerShareGbp}}</td>
+                <td>{{totalEarningsGbp}}</td>
+            </tr>
+        {{/each}}
+        </tbody>
+    </table>
+</section>
+
+<script>
+(function () {
+    const input = document.getElementById('tickerFilter');
+    const rows = document.querySelectorAll('#historyTable tbody tr');
+
+    input.addEventListener('input', function () {
+        const val = (input.value || '').trim().toUpperCase();
+        rows.forEach(row => {
+            const ticker = (row.getAttribute('data-ticker') || '').toUpperCase();
+            row.style.display = (!val || ticker.includes(val)) ? '' : 'none';
+        });
+    });
+})();
+</script>
+
+</body>
+</html>

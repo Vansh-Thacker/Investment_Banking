@@ -4,41 +4,76 @@ import java.text.NumberFormat;
 import java.util.Locale;
 
 public class Position {
+
     public String ticker;
     public int shares;
-    public int averageBookPrice;
-    public int totalInvested;
-    // stock name from equities (set when positions list is built, fallback to ticker if not resolved
+    public int averageBookPrice;   // stored in pence
+    public int totalInvested;      // stored in pence
     public String stockName;
-    // price per share at time of request (from /api/prices), null if not available
-    public Double currentPrice;
-    // current value = shares × currentPrice. null if currentPrice not available
-    public Double currentValue;
+    public Double currentPrice;    // latest price per share
+    public Double currentValue;    // shares × currentPrice
 
-    // avg price per share (from BUYs only), formatted in gbp
+    private static final NumberFormat GBP = NumberFormat.getCurrencyInstance(Locale.UK);
+
+    /* ============================================================
+       BASIC GETTERS FOR HANDLEBARS
+       ============================================================ */
+
+    public String getTicker() {
+        return ticker;
+    }
+
+    public String getStockName() {
+        return stockName != null ? stockName : ticker;
+    }
+
+    public int getShares() {
+        return shares;
+    }
+
+    /* ============================================================
+       FORMATTED VALUES FOR investments.hbs
+       ============================================================ */
+
+    public String getAverageBookPrice() {
+        return GBP.format(averageBookPrice);
+    }
+
+    public String getTotalInvested() {
+        return GBP.format(totalInvested);
+    }
+
+    public String getCurrentPrice() {
+        return currentPrice != null ? GBP.format(currentPrice) : "£0.00";
+    }
+
+    public String getCurrentValue() {
+        return currentValue != null ? GBP.format(currentValue) : "£0.00";
+    }
+
+    /* ============================================================
+       EXISTING LOGIC (kept exactly as you had it)
+       ============================================================ */
+
     public String getAveragePurchasePriceGbp() {
-        return NumberFormat.getCurrencyInstance(Locale.UK).format(averageBookPrice);
+        return GBP.format(averageBookPrice);
     }
 
-    /** Total cost of units held (total invested amount), formatted in GBP for display. */
     public String getTotalInvestedGbp() {
-        return NumberFormat.getCurrencyInstance(Locale.UK).format(totalInvested);
+        return GBP.format(totalInvested);
     }
 
-    // value (shares × latest price) formatted in GBP; "—" if not available
     public String getCurrentValueGbp() {
         if (currentValue == null) {
             return "—";
         }
-        return NumberFormat.getCurrencyInstance(Locale.UK).format(currentValue);
+        return GBP.format(currentValue);
     }
 
-    // book value = shares × average book price ( Unrealized p&l)
     public int getBookValue() {
         return shares * averageBookPrice;
     }
 
-    // unrealized P&L = current value − book value; null if currentValue not available
     public Double getUnrealizedPnL() {
         if (currentValue == null) {
             return null;
@@ -46,7 +81,6 @@ public class Position {
         return currentValue - getBookValue();
     }
 
-    // unrealized p&l % = (p&l / book value) × 100; null if book value <= 0 or no currentVal
     public Double getUnrealizedPnLPercent() {
         if (currentValue == null) {
             return null;
@@ -56,5 +90,19 @@ public class Position {
             return null;
         }
         return 100.0 * (currentValue - book) / book;
+    }
+
+    /* ============================================================
+       FORMATTED PNL FOR investments.hbs
+       ============================================================ */
+
+    public String getUnrealizedPnLFormatted() {
+        Double pnl = getUnrealizedPnL();
+        return pnl != null ? GBP.format(pnl) : "£0.00";
+    }
+
+    public String getUnrealizedPnLPercentFormatted() {
+        Double pct = getUnrealizedPnLPercent();
+        return pct != null ? String.format("%.2f%%", pct) : "0%";
     }
 }

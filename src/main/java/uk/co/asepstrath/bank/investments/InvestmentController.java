@@ -1,28 +1,72 @@
 package uk.co.asepstrath.bank.investments;
 
 import io.jooby.Context;
+import io.jooby.ModelAndView;
 import io.jooby.annotation.*;
 import io.jooby.StatusCode;
 import org.slf4j.Logger;
 import uk.co.asepstrath.bank.Account;
 import uk.co.asepstrath.bank.evaluation.EquitiesService;
+import uk.co.asepstrath.bank.evaluation.PriceLoader;
 import uk.co.asepstrath.bank.evaluation.PriceRecord;
 import uk.co.asepstrath.bank.evaluation.PriceService;
+import uk.co.asepstrath.bank.user.User;
+import uk.co.asepstrath.bank.user.UserService;
 
 import javax.sql.DataSource;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.List;
+import java.util.*;
 
 @Path("/investments")
 public class InvestmentController {
 
     private static final String FILTER_PURCHASES = "purchases";
 
+    private UserService users;
     private final InvestmentService service;
     private final Logger log;
     private final PriceService priceService;
     private final EquitiesService equitiesService;
+
+    private InvestmentService getUserInvestmentService(Context ctx) {
+
+        if (this.users == null) {
+            return this.service; // fallback for tests
+        }
+
+        String userId = ctx.session().get("userId").value();
+        String path = "UserStats/" + userId + "/history.csv";
+
+        User user = users.findById(userId);
+
+        Account account = new Account();
+        account.forceSetBalance(user.getBalancePence());
+
+        InvestmentService loaded = new InvestmentService(account);
+
+        PriceLoader loader = new PriceLoader("prices.csv");
+
+        try {
+            java.nio.file.Path p = java.nio.file.Paths.get(path);
+            System.out.println("DEBUG: Looking for history at: " + p.toAbsolutePath());
+            System.out.println("DEBUG: File exists? " + java.nio.file.Files.exists(p));
+
+            if (java.nio.file.Files.exists(p)) {
+                java.io.InputStream in = java.nio.file.Files.newInputStream(p);
+                loaded.importCsv(in, loader);
+            }
+        } catch (Exception e) {
+            throw new RuntimeException("Failed to load investment CSV for user " + userId, e);
+        }
+
+        // make the global service reflect the imported data
+        this.service.copyFrom(loaded);
+
+        return this.service;
+    }
+
+    public void setUserService(UserService users) {
+        this.users = users;
+    }
 
     public InvestmentController(DataSource ds, Logger log, Account account) {
         this(ds, log, account, null, null);
@@ -46,6 +90,14 @@ public class InvestmentController {
         this.equitiesService = equitiesService;
     }
 
+    public InvestmentController(UserService users, Logger log, PriceService priceService, EquitiesService equitiesService) {
+        this.users = users;
+        this.log = log;
+        this.priceService = priceService;
+        this.equitiesService = equitiesService;
+        this.service = new InvestmentService(new Account());
+    }
+
     @GET("/positions")
     public Object positions() {
         Collection<Position> result = service.getPositions();
@@ -58,7 +110,6 @@ public class InvestmentController {
         return result;
     }
 
-    // current market price for a symbol – for showing price before confirming sell
     @GET("/prices/{symbol}")
     public Object currentPrice(@PathParam String symbol, Context ctx) {
         if (symbol == null || symbol.isBlank()) {
@@ -86,7 +137,6 @@ public class InvestmentController {
         return resp;
     }
 
-    // stock history. filter=purchases = buy-only. sort=asc oldest first, desc/null = newest first. limit/offset for pagination.
     @GET("/transactions")
     public Object transactions(@QueryParam String filter, @QueryParam String sort,
                                @QueryParam Integer limit, @QueryParam Integer offset) {
@@ -111,7 +161,6 @@ public class InvestmentController {
         return result;
     }
 
-    // buy stocks checks funds and takes money, updates shares, returns result
     @POST("/buy")
     public Object buy(TradeRequest request, Context ctx) {
         String ticker = normalizeTicker(request.ticker, ctx);
@@ -127,8 +176,6 @@ public class InvestmentController {
         return service.newTransaction(ticker, request.shares, request.price);
     }
 
-    // preview sale details for the confirmation screen (symbol, name, shares, est price and proceeds)
-    // no sale executed, user must call post /sell to confirm and execute
     @POST("/sell/preview")
     public Object sellPreview(TradeRequest request, Context ctx) {
         String ticker = normalizeTicker(request.ticker, ctx);
@@ -149,7 +196,6 @@ public class InvestmentController {
         }
     }
 
-    // execute sale. User should have reviewed details via post /sell/preview first. Returns confirmation
     @POST("/sell")
     public Object sell(TradeRequest request, Context ctx) {
         String ticker = normalizeTicker(request.ticker, ctx);
@@ -187,7 +233,6 @@ public class InvestmentController {
         return Collections.singletonMap("error", "Ticker must be 1–5 uppercase letters");
     }
 
-    // currentPrice and currentValue on each pos from PriceService
     private void enrichPositionsWithPrices(Collection<Position> positions) {
         if (priceService == null) {
             return;
@@ -201,7 +246,6 @@ public class InvestmentController {
         }
     }
 
-    // portfolio summary: t_value = sum of pos current values + cash
     @GET("/portfolio/summary")
     public Object portfolioSummary() {
         Collection<Position> positions = service.getPositions();
@@ -220,5 +264,51 @@ public class InvestmentController {
         resp.positionsValue = positionsValue;
         resp.cashBalance = cashBalance;
         return resp;
+    }
+
+    @GET("/investmentsfrontend")
+    public ModelAndView showInvestments(Context ctx) {
+
+        String userId = ctx.session().get("userId").value((String) null);
+        if (userId == null) {
+            ctx.sendRedirect("/login");
+            return null;
+        }
+
+        User user = users.findById(userId);
+
+        InvestmentService invService = getUserInvestmentService(ctx);
+
+        Map<String, Object> model = new HashMap<>();
+        model.put("name", user.getName());
+        model.put("cashBalance", invService.getCashBalance());
+        model.put("positions", invService.getPositions());
+
+        String error = ctx.query("error").value((String) null);
+        model.put("error", error);
+
+        return new ModelAndView("investments.hbs", model);
+    }
+
+    @GET("/historyfrontend")
+    public ModelAndView showInvestmentHistory(Context ctx) {
+
+        String userId = ctx.session().get("userId").value((String) null);
+        if (userId == null) {
+            ctx.sendRedirect("/login");
+            return null;
+        }
+
+        User user = users.findById(userId);
+        InvestmentService invService = getUserInvestmentService(ctx);
+
+        Map<String, Object> model = new HashMap<>();
+        model.put("name", user.getName());
+        model.put("transactions", invService.getHistorySorted("desc"));
+
+        String error = ctx.query("error").value((String) null);
+        model.put("error", error);
+
+        return new ModelAndView("investment-history.hbs", model);
     }
 }

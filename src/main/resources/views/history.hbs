@@ -16,6 +16,12 @@
 <section class="auth-form">
     <h2>Transaction History</h2>
 
+    <div class="filter-row">
+        <button class="filter-btn" data-filter="all">All</button>
+        <button class="filter-btn" data-filter="cash">Cash</button>
+        <button class="filter-btn" data-filter="invest">Investments</button>
+    </div>
+
     <table class="history-table">
         <tr>
             <th>Date</th>
@@ -37,6 +43,8 @@
 
 <script>
 document.addEventListener('DOMContentLoaded', function () {
+
+    // Convert pence → pounds
     function convert(selector) {
         document.querySelectorAll(selector).forEach(cell => {
             const raw = cell.textContent.trim();
@@ -44,8 +52,31 @@ document.addEventListener('DOMContentLoaded', function () {
             cell.textContent = (pence / 100).toFixed(2);
         });
     }
-
     convert('.amount-cell');
+
+    // Filtering logic
+    const rows = document.querySelectorAll('.history-table tr:not(:first-child)');
+
+    document.querySelectorAll('.filter-btn').forEach(btn => {
+        btn.addEventListener('click', () => {
+            const filter = btn.dataset.filter;
+
+            rows.forEach(row => {
+                const type = row.children[1].textContent.trim().toUpperCase();
+
+                if (filter === "all") {
+                    row.style.display = "";
+                } 
+                else if (filter === "cash") {
+                    row.style.display = (type === "DEPOSIT" || type === "WITHDRAW") ? "" : "none";
+                } 
+                else if (filter === "invest") {
+                    row.style.display = (type === "BUY" || type === "SELL") ? "" : "none";
+                }
+            });
+        });
+    });
+
 });
 </script>
 
