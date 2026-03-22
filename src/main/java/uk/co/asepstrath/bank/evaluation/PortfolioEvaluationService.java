@@ -15,25 +15,21 @@ public class PortfolioEvaluationService {
 
     private static final String SECTOR_UNKNOWN = "Unknown";
 
-    private final InvestmentService investmentService;
     private final EquitiesService equitiesService;
     private final AsepPriceSource priceSource;
     private final PortfolioSnapshotService snapshots;
 
-    public PortfolioEvaluationService(InvestmentService investmentService,
-                                      EquitiesService equitiesService,
-                                      AsepPriceSource priceSource) {
-        this.investmentService = investmentService;
+    public PortfolioEvaluationService(EquitiesService equitiesService, AsepPriceSource priceSource) {
         this.equitiesService = equitiesService;
         this.priceSource = priceSource;
-        this.snapshots = new PortfolioSnapshotService(investmentService, equitiesService, priceSource);
+        this.snapshots = new PortfolioSnapshotService(equitiesService, priceSource);
     }
 
-    public PortfolioSnapshotResponse buildSnapshot() {
-        return snapshots.buildSnapshot();
+    public PortfolioSnapshotResponse buildSnapshot(InvestmentService investmentService) {
+        return snapshots.buildSnapshot(investmentService);
     }
 
-    public EvaluationOverviewResponse buildBookPriceOverview() {
+    public EvaluationOverviewResponse buildBookPriceOverview(InvestmentService investmentService) {
         NumberFormat gbp = NumberFormat.getCurrencyInstance(Locale.UK);
         List<EvaluationPositionLine> lines = new ArrayList<>();
         EvaluationSummary summary = new EvaluationSummary();
@@ -89,7 +85,7 @@ public class PortfolioEvaluationService {
         return resp;
     }
 
-    public EvaluationOverviewResponse buildMarketValueOverview() {
+    public EvaluationOverviewResponse buildMarketValueOverview(InvestmentService investmentService) {
         NumberFormat gbp = NumberFormat.getCurrencyInstance(Locale.UK);
         List<EvaluationPositionLine> lines = new ArrayList<>();
         EvaluationSummary summary = new EvaluationSummary();
@@ -154,7 +150,7 @@ public class PortfolioEvaluationService {
         return resp;
     }
 
-    public EvaluationOverviewResponse buildPriorDayEodOverview() {
+    public EvaluationOverviewResponse buildPriorDayEodOverview(InvestmentService investmentService) {
         NumberFormat gbp = NumberFormat.getCurrencyInstance(Locale.UK);
         List<EvaluationPositionLine> lines = new ArrayList<>();
         EvaluationSummary summary = new EvaluationSummary();
@@ -208,7 +204,7 @@ public class PortfolioEvaluationService {
         return resp;
     }
 
-    public EvaluationOverviewResponse buildPriorEodValueOverview() {
+    public EvaluationOverviewResponse buildPriorEodValueOverview(InvestmentService investmentService) {
         NumberFormat gbp = NumberFormat.getCurrencyInstance(Locale.UK);
         List<EvaluationPositionLine> lines = new ArrayList<>();
         EvaluationSummary summary = new EvaluationSummary();
@@ -271,8 +267,8 @@ public class PortfolioEvaluationService {
         return resp;
     }
 
-    public EvaluationOverviewResponse buildUnrealizedPnLOverview() {
-        PortfolioSnapshotResponse snap = snapshots.buildSnapshot();
+    public EvaluationOverviewResponse buildUnrealizedPnLOverview(InvestmentService investmentService) {
+        PortfolioSnapshotResponse snap = snapshots.buildSnapshot(investmentService);
         NumberFormat gbp = NumberFormat.getCurrencyInstance(Locale.UK);
 
         EvaluationOverviewResponse out = new EvaluationOverviewResponse();
@@ -282,8 +278,8 @@ public class PortfolioEvaluationService {
         return out;
     }
 
-    public PortfolioPerformanceOverviewResponse buildPortfolioPerformanceOverview() {
-        PortfolioSnapshotResponse snap = snapshots.buildSnapshot();
+    public PortfolioPerformanceOverviewResponse buildPortfolioPerformanceOverview(InvestmentService investmentService) {
+        PortfolioSnapshotResponse snap = snapshots.buildSnapshot(investmentService);
         PortfolioPerformanceOverviewResponse out = new PortfolioPerformanceOverviewResponse();
         out.summary = snap.summary;
         return out;

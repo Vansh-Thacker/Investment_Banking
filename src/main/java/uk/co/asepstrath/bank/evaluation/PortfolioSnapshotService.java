@@ -16,19 +16,15 @@ public class PortfolioSnapshotService {
 
     private static final String SECTOR_UNKNOWN = "Unknown";
 
-    private final InvestmentService investmentService;
     private final EquitiesService equitiesService;
     private final AsepPriceSource priceSource;
 
-    public PortfolioSnapshotService(InvestmentService investmentService,
-                                    EquitiesService equitiesService,
-                                    AsepPriceSource priceSource) {
-        this.investmentService = investmentService;
+    public PortfolioSnapshotService(EquitiesService equitiesService, AsepPriceSource priceSource) {
         this.equitiesService = equitiesService;
         this.priceSource = priceSource;
     }
 
-    public PortfolioSnapshotResponse buildSnapshot() {
+    public PortfolioSnapshotResponse buildSnapshot(InvestmentService investmentService) {
         NumberFormat gbp = NumberFormat.getCurrencyInstance(Locale.UK);
 
         List<EvaluationPositionLine> lines = new ArrayList<>();
@@ -41,7 +37,7 @@ public class PortfolioSnapshotService {
                 .thenComparing((EvaluationPositionLine l) -> -(l.currentMarketValue != null ? l.currentMarketValue : 0.0))
                 .thenComparing(l -> l.ticker));
 
-        EvaluationSummary summary = buildSummary(lines, gbp);
+        EvaluationSummary summary = buildSummary(investmentService, lines, gbp);
         List<EvaluationSectorGroup> sectors = buildSectorGroups(lines, gbp);
 
         PortfolioSnapshotResponse resp = new PortfolioSnapshotResponse();
@@ -103,7 +99,7 @@ public class PortfolioSnapshotService {
         return line;
     }
 
-    private EvaluationSummary buildSummary(List<EvaluationPositionLine> lines, NumberFormat gbp) {
+    private EvaluationSummary buildSummary(InvestmentService investmentService, List<EvaluationPositionLine> lines, NumberFormat gbp) {
         EvaluationSummary s = new EvaluationSummary();
         s.priceSourceNote = "Latest prices from ASEP (GET /api/prices/{symbol}), most recent date in the response per holding.";
         s.cashBalance = investmentService.getCashBalance();

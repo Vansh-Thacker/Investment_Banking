@@ -13,9 +13,8 @@ Ishbel Macglone
 
 Emmanuel Fadipe
 
-=======
 Matthew
->>>>>>> README.md
+
 ## running
 
     ./mvnw.cmd clean jooby:run

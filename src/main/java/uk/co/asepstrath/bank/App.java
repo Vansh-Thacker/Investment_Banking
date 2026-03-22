@@ -9,6 +9,7 @@ import uk.co.asepstrath.bank.Account;
 import uk.co.asepstrath.bank.cash.CashController_;
 import uk.co.asepstrath.bank.evaluation.AsepApiClient;
 import uk.co.asepstrath.bank.evaluation.EvaluationController;
+import uk.co.asepstrath.bank.evaluation.EvaluationPortfolioLoader;
 import uk.co.asepstrath.bank.evaluation.EquitiesService;
 import uk.co.asepstrath.bank.evaluation.PortfolioEvaluationService;
 import uk.co.asepstrath.bank.evaluation.PriceService;
@@ -79,19 +80,21 @@ public class App extends Jooby {
             asepBaseUrl = getConfig().getString("asep.baseUrl");
         }
         AsepApiClient asepClient = new AsepApiClient(asepBaseUrl.trim());
+        EvaluationPortfolioLoader evaluationPortfolioLoader = new EvaluationPortfolioLoader(users);
         PortfolioEvaluationService portfolioEvaluationService =
-                new PortfolioEvaluationService(investmentService, equitiesService, asepClient);
-        EvaluationController evaluationController = new EvaluationController(portfolioEvaluationService);
-        get("/evaluation/portfolio/snapshot", ctx -> evaluationController.portfolioSnapshot());
-        get("/evaluation/portfolio/performance", ctx -> evaluationController.portfolioPerformanceOverview());
-        get("/evaluation/positions/average-book-price", ctx -> evaluationController.averageBookPriceOverview());
-        get("/evaluation/positions/cost-basis", ctx -> evaluationController.costBasisOverview());
-        get("/evaluation/positions/prior-day-eod", ctx -> evaluationController.priorDayEodOverview());
-        get("/evaluation/positions/market-value", ctx -> evaluationController.marketValueOverview());
-        get("/evaluation/positions/value-at-prior-close", ctx -> evaluationController.valueAtPriorCloseOverview());
-        get("/evaluation/positions/unrealized-pnl", ctx -> evaluationController.unrealizedPnLOverview());
-        get("/evaluation/positions/unrealized-gains-losses", ctx -> evaluationController.unrealizedGainsLossesOverview());
-        get("/evaluation/positions/gains-losses", ctx -> evaluationController.absoluteAndPercentageGainsLossesOverview());
+                new PortfolioEvaluationService(equitiesService, asepClient);
+        EvaluationController evaluationController =
+                new EvaluationController(portfolioEvaluationService, evaluationPortfolioLoader);
+        get("/evaluation/portfolio/snapshot", ctx -> evaluationController.portfolioSnapshot(ctx));
+        get("/evaluation/portfolio/performance", ctx -> evaluationController.portfolioPerformanceOverview(ctx));
+        get("/evaluation/positions/average-book-price", ctx -> evaluationController.averageBookPriceOverview(ctx));
+        get("/evaluation/positions/cost-basis", ctx -> evaluationController.costBasisOverview(ctx));
+        get("/evaluation/positions/prior-day-eod", ctx -> evaluationController.priorDayEodOverview(ctx));
+        get("/evaluation/positions/market-value", ctx -> evaluationController.marketValueOverview(ctx));
+        get("/evaluation/positions/value-at-prior-close", ctx -> evaluationController.valueAtPriorCloseOverview(ctx));
+        get("/evaluation/positions/unrealized-pnl", ctx -> evaluationController.unrealizedPnLOverview(ctx));
+        get("/evaluation/positions/unrealized-gains-losses", ctx -> evaluationController.unrealizedGainsLossesOverview(ctx));
+        get("/evaluation/positions/gains-losses", ctx -> evaluationController.absoluteAndPercentageGainsLossesOverview(ctx));
 
 
         /*

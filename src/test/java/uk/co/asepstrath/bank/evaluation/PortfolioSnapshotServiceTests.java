@@ -35,8 +35,8 @@ public class PortfolioSnapshotServiceTests {
         px.date = "2025-03-01";
         quotes.put("AAPL", px);
 
-        PortfolioSnapshotService svc = new PortfolioSnapshotService(investmentService, null, fakePrices);
-        PortfolioSnapshotResponse resp = svc.buildSnapshot();
+        PortfolioSnapshotService svc = new PortfolioSnapshotService(null, fakePrices);
+        PortfolioSnapshotResponse resp = svc.buildSnapshot(investmentService);
 
         assertEquals(1, resp.positions.size());
         EvaluationPositionLine line = resp.positions.get(0);
@@ -62,8 +62,8 @@ public class PortfolioSnapshotServiceTests {
         quotes.put("AAPL", px);
         // MSFT: no quote
 
-        PortfolioSnapshotService svc = new PortfolioSnapshotService(investmentService, null, fakePrices);
-        PortfolioSnapshotResponse resp = svc.buildSnapshot();
+        PortfolioSnapshotService svc = new PortfolioSnapshotService(null, fakePrices);
+        PortfolioSnapshotResponse resp = svc.buildSnapshot(investmentService);
 
         assertEquals(550.0, resp.summary.positionsMarketValue, 0.01);
         assertEquals(1, resp.summary.positionsWithoutMarketPriceCount);
@@ -87,8 +87,8 @@ public class PortfolioSnapshotServiceTests {
         quotes.put("AAA", high);
         quotes.put("ZZZ", low);
 
-        PortfolioSnapshotService svc = new PortfolioSnapshotService(investmentService, null, fakePrices);
-        PortfolioSnapshotResponse resp = svc.buildSnapshot();
+        PortfolioSnapshotService svc = new PortfolioSnapshotService(null, fakePrices);
+        PortfolioSnapshotResponse resp = svc.buildSnapshot(investmentService);
 
         assertEquals("AAA", resp.positions.get(0).ticker);
         assertEquals("ZZZ", resp.positions.get(1).ticker);
@@ -119,8 +119,8 @@ public class PortfolioSnapshotServiceTests {
         quotes.put("AAPL", a);
         quotes.put("JPM", j);
 
-        PortfolioSnapshotService svc = new PortfolioSnapshotService(investmentService, equities, fakePrices);
-        PortfolioSnapshotResponse resp = svc.buildSnapshot();
+        PortfolioSnapshotService svc = new PortfolioSnapshotService(equities, fakePrices);
+        PortfolioSnapshotResponse resp = svc.buildSnapshot(investmentService);
 
         assertEquals(2, resp.bySector.size());
         EvaluationSectorGroup financials = resp.bySector.stream().filter(g -> "Financials".equals(g.sectorKey)).findFirst().orElseThrow();
@@ -131,8 +131,8 @@ public class PortfolioSnapshotServiceTests {
 
     @Test
     public void snapshotWithNoPositionsShowsCashOnly() {
-        PortfolioSnapshotService svc = new PortfolioSnapshotService(investmentService, null, fakePrices);
-        PortfolioSnapshotResponse resp = svc.buildSnapshot();
+        PortfolioSnapshotService svc = new PortfolioSnapshotService(null, fakePrices);
+        PortfolioSnapshotResponse resp = svc.buildSnapshot(investmentService);
 
         assertTrue(resp.positions.isEmpty());
         assertEquals(100_000, resp.summary.cashBalance);

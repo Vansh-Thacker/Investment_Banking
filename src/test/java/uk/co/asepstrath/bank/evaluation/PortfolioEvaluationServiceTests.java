@@ -42,8 +42,8 @@ public class PortfolioEvaluationServiceTests {
     @Test
     public void bookOverviewUsesPositionAverageBookPriceWithoutRecalculation() {
         investmentService.buy("AAPL", 10, 150.0);
-        PortfolioEvaluationService svc = new PortfolioEvaluationService(investmentService, null, fakeLatest);
-        EvaluationOverviewResponse resp = svc.buildBookPriceOverview();
+        PortfolioEvaluationService svc = new PortfolioEvaluationService(null, fakeLatest);
+        EvaluationOverviewResponse resp = svc.buildBookPriceOverview(investmentService);
         assertEquals(1, resp.positions.size());
         EvaluationPositionLine line = resp.positions.get(0);
         assertEquals("AAPL", line.ticker);
@@ -60,8 +60,8 @@ public class PortfolioEvaluationServiceTests {
     public void bookOverviewReflectsAverageBookPriceAfterPartialSell() {
         investmentService.buy("MSFT", 10, 300.0);
         investmentService.sell("MSFT", 4, 320.0);
-        PortfolioEvaluationService svc = new PortfolioEvaluationService(investmentService, null, fakeLatest);
-        EvaluationOverviewResponse resp = svc.buildBookPriceOverview();
+        PortfolioEvaluationService svc = new PortfolioEvaluationService(null, fakeLatest);
+        EvaluationOverviewResponse resp = svc.buildBookPriceOverview(investmentService);
         assertEquals(1, resp.positions.size());
         EvaluationPositionLine line = resp.positions.get(0);
         assertEquals(6, line.shares);
@@ -90,8 +90,8 @@ public class PortfolioEvaluationServiceTests {
         investmentService.buy("ZZZ", 1, 10.0);
         investmentService.buy("AAA", 1, 20.0);
         investmentService.buy("JPM", 1, 30.0);
-        PortfolioEvaluationService svc = new PortfolioEvaluationService(investmentService, equities, fakeLatest);
-        EvaluationOverviewResponse resp = svc.buildBookPriceOverview();
+        PortfolioEvaluationService svc = new PortfolioEvaluationService(equities, fakeLatest);
+        EvaluationOverviewResponse resp = svc.buildBookPriceOverview(investmentService);
         assertEquals("JPM", resp.positions.get(0).ticker);
         assertEquals("AAA", resp.positions.get(1).ticker);
         assertEquals("ZZZ", resp.positions.get(2).ticker);
@@ -104,8 +104,8 @@ public class PortfolioEvaluationServiceTests {
         px.pricePerShare = 2900.0;
         px.date = "2025-03-01";
         quotes.put("GOOGL", px);
-        PortfolioEvaluationService svc = new PortfolioEvaluationService(investmentService, null, fakeLatest);
-        EvaluationOverviewResponse resp = svc.buildBookPriceOverview();
+        PortfolioEvaluationService svc = new PortfolioEvaluationService(null, fakeLatest);
+        EvaluationOverviewResponse resp = svc.buildBookPriceOverview(investmentService);
         EvaluationPositionLine line = resp.positions.get(0);
         assertTrue(line.referenceMarketPriceAvailable);
         assertEquals(2900.0, line.referenceMarketPricePerShare, 0.01);
@@ -116,8 +116,8 @@ public class PortfolioEvaluationServiceTests {
     @Test
     public void bookOverviewAddsNoticeWhenAsepMissing() {
         investmentService.buy("XOM", 1, 50.0);
-        PortfolioEvaluationService svc = new PortfolioEvaluationService(investmentService, null, fakeLatest);
-        EvaluationOverviewResponse resp = svc.buildBookPriceOverview();
+        PortfolioEvaluationService svc = new PortfolioEvaluationService(null, fakeLatest);
+        EvaluationOverviewResponse resp = svc.buildBookPriceOverview(investmentService);
         assertFalse(resp.positions.get(0).referenceMarketPriceAvailable);
         assertEquals(1, resp.summary.notices.size());
         assertTrue(resp.summary.notices.get(0).contains("XOM"));
@@ -130,8 +130,8 @@ public class PortfolioEvaluationServiceTests {
         px.pricePerShare = 160.0;
         px.date = "2025-03-01";
         quotes.put("AAPL", px);
-        PortfolioEvaluationService svc = new PortfolioEvaluationService(investmentService, null, fakeLatest);
-        EvaluationOverviewResponse resp = svc.buildMarketValueOverview();
+        PortfolioEvaluationService svc = new PortfolioEvaluationService(null, fakeLatest);
+        EvaluationOverviewResponse resp = svc.buildMarketValueOverview(investmentService);
         assertEquals(1, resp.positions.size());
         EvaluationPositionLine line = resp.positions.get(0);
         assertTrue(line.marketPriceAvailable);
@@ -149,8 +149,8 @@ public class PortfolioEvaluationServiceTests {
         px.pricePerShare = 110.0;
         px.date = "2025-03-02";
         quotes.put("AAPL", px);
-        PortfolioEvaluationService svc = new PortfolioEvaluationService(investmentService, null, fakeLatest);
-        EvaluationOverviewResponse resp = svc.buildMarketValueOverview();
+        PortfolioEvaluationService svc = new PortfolioEvaluationService(null, fakeLatest);
+        EvaluationOverviewResponse resp = svc.buildMarketValueOverview(investmentService);
         assertEquals(550.0, resp.summary.totalMarketValue, 0.01);
         assertEquals(1, resp.summary.positionsWithoutMarketPriceCount);
         assertTrue(resp.summary.notices.stream().anyMatch(n -> n.contains("MSFT")));
@@ -168,8 +168,8 @@ public class PortfolioEvaluationServiceTests {
         high.date = "2025-01-02";
         quotes.put("LOW", low);
         quotes.put("HIGH", high);
-        PortfolioEvaluationService svc = new PortfolioEvaluationService(investmentService, null, fakeLatest);
-        EvaluationOverviewResponse resp = svc.buildMarketValueOverview();
+        PortfolioEvaluationService svc = new PortfolioEvaluationService(null, fakeLatest);
+        EvaluationOverviewResponse resp = svc.buildMarketValueOverview(investmentService);
         assertEquals("HIGH", resp.positions.get(0).ticker);
         assertEquals("LOW", resp.positions.get(1).ticker);
     }
@@ -181,8 +181,8 @@ public class PortfolioEvaluationServiceTests {
         prior.pricePerShare = 148.25;
         prior.date = "2025-02-04";
         priorByTicker.put("AAPL", prior);
-        PortfolioEvaluationService svc = new PortfolioEvaluationService(investmentService, null, fakePriorSource);
-        EvaluationOverviewResponse resp = svc.buildPriorDayEodOverview();
+        PortfolioEvaluationService svc = new PortfolioEvaluationService(null, fakePriorSource);
+        EvaluationOverviewResponse resp = svc.buildPriorDayEodOverview(investmentService);
         assertEquals(1, resp.positions.size());
         EvaluationPositionLine line = resp.positions.get(0);
         assertTrue(line.priorEodAvailable);
@@ -196,8 +196,8 @@ public class PortfolioEvaluationServiceTests {
     @Test
     public void priorDayOverviewMarksUnavailableWhenAsepHasInsufficientHistory() {
         investmentService.buy("MSFT", 2, 300.0);
-        PortfolioEvaluationService svc = new PortfolioEvaluationService(investmentService, null, fakePriorSource);
-        EvaluationOverviewResponse resp = svc.buildPriorDayEodOverview();
+        PortfolioEvaluationService svc = new PortfolioEvaluationService(null, fakePriorSource);
+        EvaluationOverviewResponse resp = svc.buildPriorDayEodOverview(investmentService);
         assertFalse(resp.positions.get(0).priorEodAvailable);
         assertEquals(1, resp.summary.notices.size());
         assertTrue(resp.summary.notices.get(0).contains("MSFT"));
@@ -230,8 +230,8 @@ public class PortfolioEvaluationServiceTests {
         priorByTicker.put("ZZZ", px);
         priorByTicker.put("AAA", px);
         priorByTicker.put("JPM", px);
-        PortfolioEvaluationService svc = new PortfolioEvaluationService(investmentService, equities, fakePriorSource);
-        EvaluationOverviewResponse resp = svc.buildPriorDayEodOverview();
+        PortfolioEvaluationService svc = new PortfolioEvaluationService(equities, fakePriorSource);
+        EvaluationOverviewResponse resp = svc.buildPriorDayEodOverview(investmentService);
         assertEquals("JPM", resp.positions.get(0).ticker);
         assertEquals("AAA", resp.positions.get(1).ticker);
         assertEquals("ZZZ", resp.positions.get(2).ticker);
@@ -244,8 +244,8 @@ public class PortfolioEvaluationServiceTests {
         prior.pricePerShare = 148.5;
         prior.date = "2025-02-04";
         priorByTicker.put("AAPL", prior);
-        PortfolioEvaluationService svc = new PortfolioEvaluationService(investmentService, null, fakePriorSource);
-        EvaluationOverviewResponse resp = svc.buildPriorEodValueOverview();
+        PortfolioEvaluationService svc = new PortfolioEvaluationService(null, fakePriorSource);
+        EvaluationOverviewResponse resp = svc.buildPriorEodValueOverview(investmentService);
         assertEquals(1, resp.positions.size());
         EvaluationPositionLine line = resp.positions.get(0);
         assertTrue(line.priorEodPriceAvailable);
@@ -257,8 +257,8 @@ public class PortfolioEvaluationServiceTests {
     @Test
     public void priorEodValueOverviewExcludesMissingPriorEodFromTotal() {
         investmentService.buy("MSFT", 2, 100.0);
-        PortfolioEvaluationService svc = new PortfolioEvaluationService(investmentService, null, fakePriorSource);
-        EvaluationOverviewResponse resp = svc.buildPriorEodValueOverview();
+        PortfolioEvaluationService svc = new PortfolioEvaluationService(null, fakePriorSource);
+        EvaluationOverviewResponse resp = svc.buildPriorEodValueOverview(investmentService);
         assertFalse(resp.positions.get(0).priorEodPriceAvailable);
         assertEquals(0.0, resp.summary.totalValueAtPriorClose, 0.01);
         assertEquals(1, resp.summary.notices.size());
@@ -271,9 +271,9 @@ public class PortfolioEvaluationServiceTests {
         px.pricePerShare = 160.0;
         px.date = "2025-03-01";
         quotes.put("AAPL", px);
-        PortfolioEvaluationService eval = new PortfolioEvaluationService(investmentService, null, fakeLatest);
-        PortfolioSnapshotResponse snap = eval.buildSnapshot();
-        EvaluationOverviewResponse pnl = eval.buildUnrealizedPnLOverview();
+        PortfolioEvaluationService eval = new PortfolioEvaluationService(null, fakeLatest);
+        PortfolioSnapshotResponse snap = eval.buildSnapshot(investmentService);
+        EvaluationOverviewResponse pnl = eval.buildUnrealizedPnLOverview(investmentService);
         assertEquals(snap.positions.size(), pnl.positions.size());
         assertEquals(snap.positions.get(0).unrealizedPnL, pnl.positions.get(0).unrealizedPnL);
         assertEquals(snap.positions.get(0).unrealizedPnLPercent, pnl.positions.get(0).unrealizedPnLPercent);
@@ -290,8 +290,8 @@ public class PortfolioEvaluationServiceTests {
         px.pricePerShare = 2900.0;
         px.date = "2025-04-01";
         quotes.put("GOOGL", px);
-        EvaluationPositionLine line = new PortfolioEvaluationService(investmentService, null, fakeLatest)
-                .buildUnrealizedPnLOverview().positions.get(0);
+        EvaluationPositionLine line = new PortfolioEvaluationService(null, fakeLatest)
+                .buildUnrealizedPnLOverview(investmentService).positions.get(0);
         assertTrue(line.marketPriceAvailable);
         assertNotNull(line.unrealizedPnL);
         assertNotNull(line.unrealizedPnLGbp);
@@ -307,8 +307,8 @@ public class PortfolioEvaluationServiceTests {
         px.pricePerShare = 260.0;
         px.date = "2025-06-01";
         quotes.put("MSFT", px);
-        EvaluationPositionLine line = new PortfolioEvaluationService(investmentService, null, fakeLatest)
-                .buildUnrealizedPnLOverview().positions.get(0);
+        EvaluationPositionLine line = new PortfolioEvaluationService(null, fakeLatest)
+                .buildUnrealizedPnLOverview(investmentService).positions.get(0);
         long bookValue = (long) line.shares * line.bookPricePerShare;
         assertEquals(bookValue, line.bookValue);
         double current = line.shares * line.marketPricePerShare;
@@ -340,8 +340,8 @@ public class PortfolioEvaluationServiceTests {
         b.name = "B";
         b.sector = "Tech";
         eq.addEquity(b);
-        EvaluationOverviewResponse pnl = new PortfolioEvaluationService(investmentService, eq, fakeLatest)
-                .buildUnrealizedPnLOverview();
+        EvaluationOverviewResponse pnl = new PortfolioEvaluationService(eq, fakeLatest)
+                .buildUnrealizedPnLOverview(investmentService);
         EvaluationSectorGroup tech = pnl.bySector.stream()
                 .filter(g -> "Tech".equals(g.sectorKey))
                 .findFirst()
@@ -356,9 +356,9 @@ public class PortfolioEvaluationServiceTests {
         px.pricePerShare = 160.0;
         px.date = "2025-03-01";
         quotes.put("AAPL", px);
-        PortfolioEvaluationService eval = new PortfolioEvaluationService(investmentService, null, fakeLatest);
-        PortfolioSnapshotResponse snap = eval.buildSnapshot();
-        PortfolioPerformanceOverviewResponse perf = eval.buildPortfolioPerformanceOverview();
+        PortfolioEvaluationService eval = new PortfolioEvaluationService(null, fakeLatest);
+        PortfolioSnapshotResponse snap = eval.buildSnapshot(investmentService);
+        PortfolioPerformanceOverviewResponse perf = eval.buildPortfolioPerformanceOverview(investmentService);
         assertEquals(snap.summary.positionsMarketValue, perf.summary.positionsMarketValue, 0.01);
         assertEquals(snap.summary.totalBookValueAllPositions, perf.summary.totalBookValueAllPositions);
         assertEquals(snap.summary.totalUnrealizedPnL, perf.summary.totalUnrealizedPnL, 0.01);

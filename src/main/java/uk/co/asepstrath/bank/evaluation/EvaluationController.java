@@ -1,72 +1,94 @@
 package uk.co.asepstrath.bank.evaluation;
 
+import io.jooby.Context;
+import io.jooby.StatusCode;
 import io.jooby.annotation.GET;
 import io.jooby.annotation.Path;
+import uk.co.asepstrath.bank.investments.InvestmentService;
+
+import java.util.Collections;
 
 @Path("/evaluation")
 public class EvaluationController {
 
     private final PortfolioEvaluationService evaluation;
+    private final EvaluationPortfolioLoader portfolioLoader;
 
-    public EvaluationController(PortfolioEvaluationService evaluation) {
+    public EvaluationController(PortfolioEvaluationService evaluation, EvaluationPortfolioLoader portfolioLoader) {
         this.evaluation = evaluation;
+        this.portfolioLoader = portfolioLoader;
+    }
+
+    @FunctionalInterface
+    private interface PortfolioAction {
+        Object run(InvestmentService inv);
+    }
+
+    private Object evalWithSessionPortfolio(Context ctx, PortfolioAction action) {
+        String userId = ctx.session().get("userId").value((String) null);
+        if (userId == null || userId.isBlank()) {
+            ctx.setResponseCode(StatusCode.UNAUTHORIZED);
+            return Collections.singletonMap("error", "Authentication required");
+        }
+        try {
+            InvestmentService inv = portfolioLoader.loadForUserId(userId);
+            return action.run(inv);
+        } catch (IllegalArgumentException e) {
+            ctx.setResponseCode(StatusCode.UNAUTHORIZED);
+            return Collections.singletonMap("error", "Authentication required");
+        } catch (RuntimeException e) {
+            ctx.setResponseCode(StatusCode.SERVER_ERROR);
+            return Collections.singletonMap("error", "Failed to load portfolio");
+        }
     }
 
     @GET("/portfolio/snapshot")
-    public Object portfolioSnapshot() {
-        return evaluation.buildSnapshot();
+    public Object portfolioSnapshot(Context ctx) {
+        return evalWithSessionPortfolio(ctx, evaluation::buildSnapshot);
     }
 
-    // aggregate totals only — same summary as portfolio snapshot
     @GET("/portfolio/performance")
-    public Object portfolioPerformanceOverview() {
-        return evaluation.buildPortfolioPerformanceOverview();
+    public Object portfolioPerformanceOverview(Context ctx) {
+        return evalWithSessionPortfolio(ctx, evaluation::buildPortfolioPerformanceOverview);
     }
 
     @GET("/positions/average-book-price")
-    public Object averageBookPriceOverview() {
-        return evaluation.buildBookPriceOverview();
+    public Object averageBookPriceOverview(Context ctx) {
+        return evalWithSessionPortfolio(ctx, evaluation::buildBookPriceOverview);
     }
 
-    // same payload as average-book-price
     @GET("/positions/cost-basis")
-    public Object costBasisOverview() {
-        return evaluation.buildBookPriceOverview();
+    public Object costBasisOverview(Context ctx) {
+        return evalWithSessionPortfolio(ctx, evaluation::buildBookPriceOverview);
     }
 
-    // prior session EOD per holding from ASEP
     @GET("/positions/prior-day-eod")
-    public Object priorDayEodOverview() {
-        return evaluation.buildPriorDayEodOverview();
+    public Object priorDayEodOverview(Context ctx) {
+        return evalWithSessionPortfolio(ctx, evaluation::buildPriorDayEodOverview);
     }
 
-    // shares × latest ASEP close per position
     @GET("/positions/market-value")
-    public Object marketValueOverview() {
-        return evaluation.buildMarketValueOverview();
+    public Object marketValueOverview(Context ctx) {
+        return evalWithSessionPortfolio(ctx, evaluation::buildMarketValueOverview);
     }
 
-    // shares × prior session EOD
     @GET("/positions/value-at-prior-close")
-    public Object valueAtPriorCloseOverview() {
-        return evaluation.buildPriorEodValueOverview();
+    public Object valueAtPriorCloseOverview(Context ctx) {
+        return evalWithSessionPortfolio(ctx, evaluation::buildPriorEodValueOverview);
     }
 
-    // book vs ASEP last close and unrealized P&L
     @GET("/positions/unrealized-pnl")
-    public Object unrealizedPnLOverview() {
-        return evaluation.buildUnrealizedPnLOverview();
+    public Object unrealizedPnLOverview(Context ctx) {
+        return evalWithSessionPortfolio(ctx, evaluation::buildUnrealizedPnLOverview);
     }
 
-    // same payload as unrealized-pnl
     @GET("/positions/unrealized-gains-losses")
-    public Object unrealizedGainsLossesOverview() {
-        return evaluation.buildUnrealizedPnLOverview();
+    public Object unrealizedGainsLossesOverview(Context ctx) {
+        return evalWithSessionPortfolio(ctx, evaluation::buildUnrealizedPnLOverview);
     }
 
-    // absolute £ and % unrealized per position
     @GET("/positions/gains-losses")
-    public Object absoluteAndPercentageGainsLossesOverview() {
-        return evaluation.buildUnrealizedPnLOverview();
+    public Object absoluteAndPercentageGainsLossesOverview(Context ctx) {
+        return evalWithSessionPortfolio(ctx, evaluation::buildUnrealizedPnLOverview);
     }
 }
