@@ -78,7 +78,14 @@ public class App extends Jooby {
         DataSource ds = require(DataSource.class);
         PriceService priceService = new PriceService();
         EquitiesService equitiesService = new EquitiesService();
-        mvc(new InvestmentController_(ds, log, account, priceService, equitiesService));
+        
+        // INVESTMENT CONTROLLER (FIXED)
+        InvestmentController investments = new InvestmentController(ds, log, account, priceService, equitiesService);
+        // inject UserService so this.users is NOT null
+        investments.setUserService(users);
+        // register the already-constructed controller
+        mvc(new InvestmentController_(investments));
+
 
 
         /*
