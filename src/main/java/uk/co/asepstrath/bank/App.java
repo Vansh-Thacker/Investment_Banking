@@ -16,9 +16,11 @@ import io.jooby.handlebars.HandlebarsModule;
 import io.jooby.helper.UniRestExtension;
 import io.jooby.hikari.HikariModule;
 import org.slf4j.Logger;
+import uk.co.asepstrath.bank.portfolio.PortfolioEquityData_;
 import uk.co.asepstrath.bank.user.LoginController;
 import uk.co.asepstrath.bank.user.LoginController_;
 import uk.co.asepstrath.bank.user.UserService;
+import uk.co.asepstrath.bank.portfolio.PortfolioEquityData;
 
 import javax.sql.DataSource;
 import java.sql.Connection;
@@ -73,6 +75,8 @@ public class App extends Jooby {
         // Register it with Jooby
         mvc(new CashController_(cash));
         mvc(new LoginController_(log, users));
+        mvc(new PortfolioEquityData_());
+
 
 
 
