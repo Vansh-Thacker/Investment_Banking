@@ -16,7 +16,8 @@ import io.jooby.handlebars.HandlebarsModule;
 import io.jooby.helper.UniRestExtension;
 import io.jooby.hikari.HikariModule;
 import org.slf4j.Logger;
-import uk.co.asepstrath.bank.portfolio.PortfolioEquityData_;
+import uk.co.asepstrath.bank.portfolio.PortfolioController;
+import uk.co.asepstrath.bank.portfolio.PortfolioController_;
 import uk.co.asepstrath.bank.user.LoginController;
 import uk.co.asepstrath.bank.user.LoginController_;
 import uk.co.asepstrath.bank.user.UserService;
@@ -61,10 +62,12 @@ public class App extends Jooby {
         */
 
 
+        DataSource ds = require(DataSource.class);
         Logger log = getLog();
-
         UserService users = new UserService();
         Account account = new Account();
+
+        PortfolioController portfolio = new PortfolioController(ds, log);
 
         // Create controller manually
         CashController cash = new CashController(log, account);
@@ -75,7 +78,7 @@ public class App extends Jooby {
         // Register it with Jooby
         mvc(new CashController_(cash));
         mvc(new LoginController_(log, users));
-        mvc(new PortfolioEquityData_());
+        mvc(new PortfolioController_(portfolio));
 
 
 

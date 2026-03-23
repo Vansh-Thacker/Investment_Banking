@@ -15,9 +15,7 @@ import java.sql.Connection;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Random;
+import java.util.*;
 
 
 @Path("/portfolio")
@@ -25,17 +23,11 @@ public class PortfolioController extends Jooby{
 
     private final DataSource dataSource;
     private final Logger logger;
+    private final PortfolioService service;
     public PortfolioController(DataSource dataSource, Logger logger) {
         this.dataSource = dataSource;
         this.logger = logger;
+        this.service = new PortfolioService("uk", "Europe", "Finance");
     }
-
-    @GET
-    public void index(Context ctx) {
-
     }
-
-
-
-}
 

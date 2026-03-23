@@ -3,17 +3,22 @@ package uk.co.asepstrath.bank.portfolio;
 import io.jooby.Context;
 import io.jooby.annotation.GET;
 import io.jooby.annotation.QueryParam;
-
-import java.net.URLEncoder;
-import java.nio.charset.StandardCharsets;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.net.http.HttpClient;
+import java.util.*;
 
 public class PortfolioEquityData {
+
+    private final HttpClient httpClient = HttpClient.newHttpClient();
+
+    private final Queue<Long> timestamps = new LinkedList<>();
+    private final int maxReqs = 100;
+    private final long time = 60_000;
+
+    private final PortfolioService service = new PortfolioService("uk", "Europe", "Finance");
+
     @GET("/portfolioEquity")
-    public Map<String, Object> getPortfolioEquity(@QueryParam("tickers") String tickers, Context ctx) {
+    public Map<String, Object> getPortfolioEquity(
+            @QueryParam("tickers") String tickers, Context ctx) {
         Map<String, Object> result = new HashMap<>();
         List<Map<String, Object>> data = new ArrayList<>();
 
@@ -22,18 +27,15 @@ public class PortfolioEquityData {
             ctx.sendRedirect("/login");
             return null;
         }
-
-        System.out.println(username);
-
         if (tickers == null || tickers.isEmpty()) {
             throw new IllegalArgumentException("Tickers parameter is required");
         }
 
-        String[] tickerList = tickers.split(",");
+        List<String> tickersList = Arrays.asList(tickers.split(","));
+        List<Map<String,Object>> equityData = service.getEquityData(tickersList);
 
 
         result.put("data", data);
-        System.out.println(result);
         return result;
     }
 
