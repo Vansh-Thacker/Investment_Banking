@@ -1,0 +1,155 @@
+:root {
+    --bg-deep: #0f172a;
+    --bg-surface: #1e293b;
+    --accent: #3b82f6;
+    --accent-hover: #2563eb;
+    --text-primary: #f8fafc;
+    --text-secondary: #94a3b8;
+    --border: #334155;
+    --green: #22c55e;
+    --red: #ef4444;
+}
+
+/* PAGE LAYOUT */
+body.invest-page {
+    display: flex;
+    justify-content: center;
+    align-items: flex-start;
+    min-height: 100vh;
+    background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%);
+    padding-top: 70px;
+    margin: 0;
+    font-family: Arial, sans-serif;
+}
+
+/* NAVIGATION */
+.top-nav {
+    position: absolute;
+    top: 16px;
+    left: 16px;
+}
+
+.top-nav a {
+    color: var(--accent);
+    text-decoration: none;
+    margin-right: 12px;
+    font-weight: 600;
+}
+
+.top-nav a:hover {
+    text-decoration: underline;
+}
+
+/* MAIN CONTAINER */
+.invest-container {
+    width: 480px;
+    background: var(--bg-deep);
+    padding: 2.5rem;
+    border-radius: 16px;
+    border: 1px solid var(--border);
+    box-shadow: 0 10px 30px rgba(0,0,0,0.6);
+}
+
+.invest-container h2 {
+    color: var(--text-primary);
+    text-align: center;
+    margin-bottom: 1.8rem;
+}
+
+/* CASH BOX */
+.cash-box {
+    background: var(--bg-surface);
+    padding: 1rem;
+    border-radius: 12px;
+    border: 1px solid var(--border);
+    margin-bottom: 1.8rem;
+    text-align: center;
+}
+
+.cash-box .label {
+    color: var(--text-secondary);
+    font-size: 0.95rem;
+}
+
+.cash-box .value {
+    color: var(--text-primary);
+    font-size: 1.6rem;
+    font-weight: 700;
+}
+
+/* FORM ELEMENTS */
+label {
+    display: block;
+    margin-top: 1.2rem;
+    margin-bottom: 6px;
+    color: var(--text-secondary);
+    font-size: 0.95rem;
+}
+
+select,
+input[type="number"] {
+    width: 100%;
+    padding: 12px;
+    border-radius: 8px;
+    border: 1px solid var(--border);
+    background: var(--bg-surface);
+    color: var(--text-primary);
+    font-size: 1rem;
+}
+
+select:focus,
+input[type="number"]:focus {
+    border-color: var(--accent);
+    outline: none;
+}
+
+/* PRICE + TOTAL DISPLAY */
+.calc-row {
+    margin-top: 1rem;
+    color: var(--text-primary);
+    font-size: 1rem;
+}
+
+.calc-row span {
+    font-weight: 700;
+    color: var(--accent);
+}
+
+/* BUTTON */
+button {
+    width: 100%;
+    margin-top: 1.8rem;
+    padding: 14px;
+    font-size: 1rem;
+    font-weight: 600;
+    border-radius: 8px;
+    border: none;
+    cursor: pointer;
+    transition: background 0.2s;
+}
+
+button:not(:disabled) {
+    background: var(--accent);
+    color: white;
+}
+
+button:not(:disabled):hover {
+    background: var(--accent-hover);
+}
+
+button:disabled {
+    background: #1e293b;
+    color: #64748b;
+    cursor: not-allowed;
+}
+
+/* REMOVE NUMBER ARROWS */
+input[type=number]::-webkit-inner-spin-button,
+input[type=number]::-webkit-outer-spin-button {
+    -webkit-appearance: none;
+    margin: 0;
+}
+
+input[type=number] {
+    -moz-appearance: textfield;
+}

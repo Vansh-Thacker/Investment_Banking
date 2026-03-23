@@ -24,8 +24,8 @@
 
     <!-- ACTION BUTTONS -->
     <div class="action-row">
-        <a class="btn" href="/investments/buy-page">Buy Stock</a>
-        <a class="btn" href="/investments/sell-page">Sell Stock</a>
+        <a class="btn" href="/investments/buy">Buy Stock</a>
+        <a class="btn" href="/investments/sell">Sell Stock</a>
         <a class="btn" href="/investments/historyfrontend">Transaction History</a>
     </div>
 
@@ -33,29 +33,27 @@
     <table class="portfolio-table">
         <tr>
             <th>Ticker</th>
-            <th>Name</th>
             <th>Shares</th>
             <th>Avg Price (£)</th>
             <th>Total Invested (£)</th>
-            <th>Current Price (£)</th>
+            {{!-- <th>Current Price (£)</th> --}}
             <th>Current Value (£)</th>
-            <th>P/L (£)</th>
-            <th>P/L (%)</th>
+            {{!-- <th>P/L (£)</th>
+            <th>P/L (%)</th> --}}
         </tr>
 
         {{#each positions}}
         <tr>
             <td>{{ticker}}</td>
-            <td>{{stockName}}</td>
             <td>{{shares}}</td>
             <td class="gbp">{{averageBookPrice}}</td>
             <td class="gbp">{{totalInvested}}</td>
-            <td class="gbp">{{currentPrice}}</td>
+            {{!-- <td class="gbp">{{currentPrice}}</td> --}}
             <td class="gbp">{{currentValue}}</td>
 
             <!-- P/L -->
-            <td class="pnl">{{unrealizedPnLFormatted}}</td>
-            <td class="pnl">{{unrealizedPnLPercentFormatted}}</td>
+            {{!-- <td class="pnl">{{unrealizedPnLFormatted}}</td>
+            <td class="pnl">{{unrealizedPnLPercentFormatted}}</td> --}}
         </tr>
         {{/each}}
     </table>

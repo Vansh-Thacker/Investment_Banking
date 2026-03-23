@@ -4,15 +4,21 @@ import java.io.*;
 import java.nio.file.*;
 import java.util.*;
 
+import uk.co.asepstrath.bank.Account;
+import uk.co.asepstrath.bank.investments.InvestmentService;
+import uk.co.asepstrath.bank.evaluation.CurrentPriceService;
+
 public class UserService {
 
     private final Path csvPath = Path.of("users.csv");
     private final Map<String, User> users = new HashMap<>();
 
-    // File storing the last used hex ID
     private static final String LAST_ID_FILE = "UserStats/lastId.txt";
 
-    public UserService() {
+    private final CurrentPriceService currentPriceService;
+
+    public UserService(CurrentPriceService currentPriceService) {
+        this.currentPriceService = currentPriceService;
         loadUsers();
     }
 
@@ -22,19 +28,27 @@ public class UserService {
 
             List<String> lines = Files.readAllLines(csvPath);
 
-            // Skip header
             for (int i = 1; i < lines.size(); i++) {
                 String[] p = lines.get(i).split(",", -1);
                 if (p.length != 4) continue;
 
                 String id = p[0];
                 String name = p[1];
-                String password = p[2]; // plain text
+                String password = p[2];
                 int balance = Integer.parseInt(p[3]);
 
-                users.put(id, new User(id, name, password, balance));
-            }
+                User u = new User(id, name, password, balance);
 
+                Account acc = new Account();
+                acc.forceSetBalance(balance);
+                u.setAccount(acc);
+
+                String invCsv = "UserStats/" + id + "/history.csv";
+                InvestmentService inv = new InvestmentService(acc, currentPriceService, invCsv);
+                u.setInvestmentService(inv);
+
+                users.put(id, u);
+            }
         } catch (Exception e) {
             throw new RuntimeException("Failed to load users.csv", e);
         }
@@ -73,19 +87,22 @@ public class UserService {
         return findByName(name) != null;
     }
 
-    // createUser now uses the hex ID generator
     public User createUser(String name, String password) {
-        if (nameExists(name)) {
-            throw new IllegalArgumentException("Username already exists");
-        }
+        String id = generateId();
+        int balance = 0;
 
-        String id = generateNextId();   // Use hex ID
+        User u = new User(id, name, password, balance);
 
-        User u = new User(id, name, password, 0);
+        Account acc = new Account();
+        acc.forceSetBalance(balance);
+        u.setAccount(acc);
+
+        String invCsv = "UserStats/" + id + "/history.csv";
+        InvestmentService inv = new InvestmentService(acc, currentPriceService, invCsv);
+        u.setInvestmentService(inv);
 
         users.put(id, u);
         saveUsers();
-
         return u;
     }
 
@@ -93,19 +110,22 @@ public class UserService {
         User u = users.get(id);
         if (u != null) {
             u.setBalancePence(newBalance);
+            u.getAccount().forceSetBalance(newBalance);
             saveUsers();
         }
     }
 
-    // Hex ID generator stored in UserStats/lastId.txt
+    private String generateId() {
+        return generateNextId();
+    }
+
     private String generateNextId() {
         try {
             Path path = Paths.get(LAST_ID_FILE);
 
-            // Ensure directory exists
             Files.createDirectories(path.getParent());
 
-            int last = 0x4f; // default: next will be 50
+            int last = 0x4f;
 
             if (Files.exists(path)) {
                 String hex = Files.readString(path).trim();
@@ -116,17 +136,13 @@ public class UserService {
 
             int next = last + 1;
 
-            // lowercase hex, padded to 4 digits (e.g., 0050)
             String hexPart = String.format("%04x", next);
 
-            // Save new ID
             Files.writeString(path, hexPart);
 
-            // Generate random tail
             String random4 = randomHex(4);
             String random12 = randomHex(12);
 
-            // Final ID format
             return "00000000-0000-" + hexPart + "-" + random4 + "-" + random12;
 
         } catch (Exception e) {
@@ -134,8 +150,6 @@ public class UserService {
         }
     }
 
-
-    // Helper function for generate next id
     private static final java.security.SecureRandom RNG = new java.security.SecureRandom();
 
     private String randomHex(int length) {

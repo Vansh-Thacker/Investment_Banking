@@ -12,6 +12,10 @@ import java.nio.file.Paths;
 // loads per-user portfolio data for eval (not final — Mockito subclasses this in tests)
 public class EvaluationPortfolioLoader {
 
+    // NEW: current price loader + service for currentprices.csv
+    CurrentPriceLoader currentPriceLoader = new CurrentPriceLoader("currentprices.csv");
+    CurrentPriceService currentPriceService = new CurrentPriceService(currentPriceLoader);
+
     private final UserService users;
 
     public EvaluationPortfolioLoader(UserService users) {
@@ -28,7 +32,7 @@ public class EvaluationPortfolioLoader {
         }
         Account account = new Account();
         account.forceSetBalance(user.getBalancePence());
-        InvestmentService loaded = new InvestmentService(account);
+        InvestmentService loaded = new InvestmentService(account, currentPriceLoader);
         PriceLoader priceLoader = new PriceLoader("prices.csv");
         Path p = Paths.get("UserStats/" + userId + "/history.csv");
         try {

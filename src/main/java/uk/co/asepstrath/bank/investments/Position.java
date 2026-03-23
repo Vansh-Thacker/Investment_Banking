@@ -36,11 +36,11 @@ public class Position {
        ============================================================ */
 
     public String getAverageBookPrice() {
-        return GBP.format(averageBookPrice);
+        return GBP.format(averageBookPrice / 100);
     }
 
     public String getTotalInvested() {
-        return GBP.format(totalInvested);
+        return GBP.format(totalInvested / 100);
     }
 
     public String getCurrentPrice() {
@@ -90,19 +90,5 @@ public class Position {
             return null;
         }
         return 100.0 * (currentValue - book) / book;
-    }
-
-    /* ============================================================
-       FORMATTED PNL FOR investments.hbs
-       ============================================================ */
-
-    public String getUnrealizedPnLFormatted() {
-        Double pnl = getUnrealizedPnL();
-        return pnl != null ? GBP.format(pnl) : "£0.00";
-    }
-
-    public String getUnrealizedPnLPercentFormatted() {
-        Double pct = getUnrealizedPnLPercent();
-        return pct != null ? String.format("%.2f%%", pct) : "0%";
     }
 }
