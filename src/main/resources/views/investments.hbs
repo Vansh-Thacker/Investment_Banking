@@ -38,8 +38,8 @@
             <th>Total Invested (£)</th>
             {{!-- <th>Current Price (£)</th> --}}
             <th>Current Value (£)</th>
-            {{!-- <th>P/L (£)</th>
-            <th>P/L (%)</th> --}}
+            <th>P/L (£)</th>
+            <th>P/L (%)</th>
         </tr>
 
         {{#each positions}}
@@ -52,8 +52,8 @@
             <td class="gbp">{{currentValue}}</td>
 
             <!-- P/L -->
-            {{!-- <td class="pnl">{{unrealizedPnLFormatted}}</td>
-            <td class="pnl">{{unrealizedPnLPercentFormatted}}</td> --}}
+            <td class="pnl">{{unrealizedPnLGbp}}</td>
+            <td class="pnl">{{unrealizedPnLPercentFormatted}}</td>
         </tr>
         {{/each}}
     </table>

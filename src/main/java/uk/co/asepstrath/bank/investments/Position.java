@@ -36,11 +36,11 @@ public class Position {
        ============================================================ */
 
     public String getAverageBookPrice() {
-        return GBP.format(averageBookPrice / 100);
+        return GBP.format(averageBookPrice / 100.0); // displaying it as a double (decimal)
     }
 
     public String getTotalInvested() {
-        return GBP.format(totalInvested / 100);
+        return GBP.format(totalInvested / 100.0); // displaying it as a double (decimal)
     }
 
     public String getCurrentPrice() {
@@ -71,24 +71,45 @@ public class Position {
     }
 
     public int getBookValue() {
-        return shares * averageBookPrice;
+        return totalInvested;
     }
 
     public Double getUnrealizedPnL() {
         if (currentValue == null) {
             return null;
         }
-        return currentValue - getBookValue();
+
+        double bookPounds = getBookValue() / 100.0; // convert pence → pounds
+        return currentValue - bookPounds;
     }
 
     public Double getUnrealizedPnLPercent() {
         if (currentValue == null) {
             return null;
         }
-        int book = getBookValue();
-        if (book <= 0) {
+
+        double bookPounds = getBookValue() / 100.0; // convert pence → pounds
+
+        if (bookPounds <= 0) {
             return null;
         }
-        return 100.0 * (currentValue - book) / book;
+
+        return 100.0 * (currentValue - bookPounds) / bookPounds;
+    }
+
+    public String getUnrealizedPnLGbp() {
+        Double pnl = getUnrealizedPnL();
+        if (pnl == null) {
+            return "—";
+        }
+        return GBP.format(pnl); // pnl is already in pounds
+    }
+
+    public String getUnrealizedPnLPercentFormatted() {
+        Double pct = getUnrealizedPnLPercent();
+        if (pct == null) {
+            return "—";
+        }
+        return String.format("%.2f%%", pct);
     }
 }

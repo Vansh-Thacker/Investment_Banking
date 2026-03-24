@@ -9,17 +9,15 @@
 <body class="invest-page">
 
 <nav class="top-nav">
-    <a href="/cash/cashsidefrontend">Cash</a>
     <a href="/investments/investmentsfrontend">Investments</a>
     <a href="/investments/historyfrontend">History</a>
-    <a href="/logout">Logout</a>
 </nav>
 
 <section class="invest-container">
     <h2>Buy Shares</h2>
 
     <!-- cashBalance is raw pence, so convert to pounds here -->
-    <p>Cash available: 
+    <p style="color: #ffffff;">Cash available: 
         <strong class="gbp">
             £{{cashBalance}}
         </strong>
@@ -29,18 +27,14 @@
 
         <label for="ticker">Select Stock:</label>
         <select id="ticker" name="ticker" required>
-        <option value="">-- choose --</option>
-        {{#each tickerOptions}}
-            <option value="{{this}}">{{this}}</option>
-        {{/each}}
-    </select>
-
+            <option value="">-- choose --</option>
+            {{#each tickerOptions}}
+                <option value="{{this}}">{{this}}</option>
+            {{/each}}
+        </select>
 
         <label for="shares">Shares to Buy:</label>
         <input id="shares" name="shares" type="number" min="1" required>
-
-        <p>Price per share: <span id="pps">£0.00</span></p>
-        <p>Total cost: <span id="total">£0.00</span></p>
 
         <button type="submit" id="buyBtn" disabled>Buy</button>
     </form>
@@ -50,8 +44,6 @@
 (function () {
     const ticker = document.getElementById('ticker');
     const shares = document.getElementById('shares');
-    const pps = document.getElementById('pps');
-    const total = document.getElementById('total');
     const btn = document.getElementById('buyBtn');
 
     // cashBalance is pence → convert to pounds for comparison
@@ -59,15 +51,9 @@
     const cash = cashPence / 100.0;
 
     function update() {
-        const opt = ticker.selectedOptions[0];
-        const price = opt ? parseFloat(opt.dataset.price) : 0;
         const qty = parseInt(shares.value) || 0;
 
-        pps.textContent = "£" + price.toFixed(2);
-
-        const cost = price * qty;
-        total.textContent = "£" + cost.toFixed(2);
-
+        // Keep this — enables button only when shares > 0
         btn.disabled = !(qty > 0);
     }
 

@@ -9,10 +9,8 @@
 <body class="invest-page">
 
 <nav class="top-nav">
-    <a href="/cash/cashsidefrontend">Cash</a>
     <a href="/investments/investmentsfrontend">Investments</a>
     <a href="/investments/historyfrontend">History</a>
-    <a href="/logout">Logout</a>
 </nav>
 
 <section class="invest-container">
@@ -25,18 +23,14 @@
             <option value="">-- choose --</option>
             {{#each positions}}
                 <option value="{{ticker}}" 
-                        data-price="{{currentPrice}}" 
                         data-owned="{{shares}}">
-                    {{ticker}} — {{shares}} owned — £{{currentPrice}}
+                    {{ticker}} — {{shares}} owned
                 </option>
             {{/each}}
         </select>
 
         <label for="shares">Shares to Sell:</label>
         <input id="shares" name="shares" type="number" min="1" required>
-
-        <p>Price per share: <span id="pps">£0.00</span></p>
-        <p>Total proceeds: <span id="total">£0.00</span></p>
 
         <button type="submit" id="sellBtn" disabled>Sell</button>
     </form>
@@ -46,20 +40,14 @@
 (function () {
     const ticker = document.getElementById('ticker');
     const shares = document.getElementById('shares');
-    const pps = document.getElementById('pps');
-    const total = document.getElementById('total');
     const btn = document.getElementById('sellBtn');
 
     function update() {
         const opt = ticker.selectedOptions[0];
-        const price = opt ? parseFloat(opt.dataset.price) : 0;
         const owned = opt ? parseInt(opt.dataset.owned) : 0;
         const qty = parseInt(shares.value) || 0;
 
-        pps.textContent = "£" + price.toFixed(2);
-        const proceeds = price * qty;
-        total.textContent = "£" + proceeds.toFixed(2);
-
+        // Keep this — ensures valid quantity and prevents overselling
         btn.disabled = !(qty > 0 && qty <= owned);
     }
 
