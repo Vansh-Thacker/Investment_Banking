@@ -44,6 +44,7 @@ public class InvestmentController {
         this.currentPriceService = currentPriceService;
     }
 
+    // Constructor for testing
     private InvestmentController newController(
             UserService users,
             PriceService priceService,
@@ -250,7 +251,6 @@ public class InvestmentController {
         String ticker = normalizeTicker(request.ticker, ctx);
         if (ticker == null) return errorResponse(ctx);
         if (request.shares <= 0) {
-            //ctx.setResponseCode(StatusCode.BAD_REQUEST);
             return Collections.singletonMap("error", "Number of shares must be positive");
         }
         if (request.price <= 0) {
@@ -293,7 +293,6 @@ public class InvestmentController {
         String ticker = ctx.form("ticker").value();
         ticker = normalizeTicker(ticker, ctx);
         if (ticker == null) {
-            //ctx.setResponseCode(StatusCode.BAD_REQUEST);
             return Collections.singletonMap("error", "Invalid ticker");
         }
 
@@ -485,7 +484,6 @@ public class InvestmentController {
 
     private String normalizeTicker(String ticker, Context ctx) {
         if (ticker == null || ticker.isBlank()) {
-            //ctx.setResponseCode(StatusCode.BAD_REQUEST);
             return null;
         }
         String normalized = ticker.trim().toUpperCase();

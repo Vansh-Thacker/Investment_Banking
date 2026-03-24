@@ -28,7 +28,7 @@ public class LoginController {
         // If already logged in, redirect
         String userId = ctx.session().get("userId").value((String) null);
         if (userId != null) {
-            ctx.sendRedirect("/cash/cashsidefrontend");
+            ctx.sendRedirect("/investments/investmentsfrontend");
             return null;
         }
 
@@ -46,7 +46,7 @@ public class LoginController {
         // If already logged in, redirect
         String userId = ctx.session().get("userId").value((String) null);
         if (userId != null) {
-            ctx.sendRedirect("/cash/cashsidefrontend");
+            ctx.sendRedirect("/investments/investmentsfrontend");
             return null;
         }
 
@@ -71,7 +71,7 @@ public class LoginController {
         // Store only userId in session
         ctx.session().put("userId", u.getId());
 
-        ctx.sendRedirect("/cash/cashsidefrontend");
+        ctx.sendRedirect("/investments/investmentsfrontend");
     }
 
     @POST("/signup")

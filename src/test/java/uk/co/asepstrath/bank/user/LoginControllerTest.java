@@ -56,7 +56,7 @@ public class LoginControllerTest {
 
         controller.showLogin(ctx);
 
-        verify(ctx).sendRedirect("/cash/cashsidefrontend");
+        verify(ctx).sendRedirect("/investments/investmentsfrontend");
     }
 
     @Test
@@ -85,7 +85,7 @@ public class LoginControllerTest {
         controller.login(ctx);
 
         verify(session).put("userId", "50");
-        verify(ctx).sendRedirect("/cash/cashsidefrontend");
+        verify(ctx).sendRedirect("/investments/investmentsfrontend");
     }
 
     @Test
@@ -208,7 +208,7 @@ public class LoginControllerTest {
 
         controller.showSignup(ctx);
 
-        verify(ctx).sendRedirect("/cash/cashsidefrontend");
+        verify(ctx).sendRedirect("/investments/investmentsfrontend");
     }
 
 }
