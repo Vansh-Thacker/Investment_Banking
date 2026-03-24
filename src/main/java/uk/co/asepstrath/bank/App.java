@@ -67,7 +67,7 @@ public class App extends Jooby {
         UserService users = new UserService();
         Account account = new Account();
 
-        PortfolioController portfolio = new PortfolioController(ds, log);
+        PortfolioController portfolio = new PortfolioController(log);
 
         // Create controller manually
         CashController cash = new CashController(log, account);
