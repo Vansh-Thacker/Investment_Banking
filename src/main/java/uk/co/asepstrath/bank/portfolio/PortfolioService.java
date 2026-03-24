@@ -29,7 +29,7 @@ public class PortfolioService {
     }
 
 
-    private final Queue<Long> timestamps = new ConcurrentLinkedQueue<>();
+    private final ArrayList<Long> timestamps = new ArrayList<>();
     private final int maxReqs = 100;
     private final long reqTime = 60_000L;
 
@@ -45,7 +45,7 @@ public class PortfolioService {
                         ticker,
                         StandardCharsets.UTF_8
                 );
-                String url = "https://api.portfolio.com/v1/ticker/" + encodedTicker;
+                String url = "https://api.asep-strath.co.uk/api/equities/metadata" + encodedTicker;
 
                 HttpResponse<JsonNode> response = Unirest.get(url).asJson();
                 JSONObject json = response.getBody().getObject();

@@ -20,9 +20,18 @@ public class PortfolioController extends Jooby {
     }
 
     @GET
-    public ModelAndView index(Context ctx) {
+    public ModelAndView dashboard(Context ctx) {
+        List<String> tickers = List.of("hsba", "bp", "ulvr", "tsco", "nvda");
+        List<Map<String, Object>> equities = service.getEquityData(tickers);
+
+        // Compute total value
+        double total = equities.stream()
+                .mapToDouble(e -> ((Number) e.getOrDefault("marketCap", 0)).doubleValue())
+                .sum();
+
         Map<String, Object> model = new HashMap<>();
-        // Add data to model as needed
-        return new ModelAndView("portfolio/index", model);
+        model.put("equities", equities);
+        model.put("totalValue", String.format("%.0f", total));
+        return new ModelAndView("portfolio/dashboard", model);
     }
 }
