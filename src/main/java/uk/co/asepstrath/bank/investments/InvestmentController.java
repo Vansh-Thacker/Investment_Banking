@@ -173,7 +173,11 @@ public class InvestmentController {
     @POST("/buy")
     public Object buy(Context ctx) {
 
-        String userId = ctx.session().get("userId").value();
+        String userId = ctx.session().get("userId").value((String) null);
+        if (userId == null) {
+            ctx.setResponseCode(StatusCode.UNAUTHORIZED);
+            return Collections.singletonMap("error", "Not logged in");
+        }
         User user = users.findById(userId);
 
         Account account = user.getAccount();
@@ -260,7 +264,11 @@ public class InvestmentController {
     @POST("/sell")
     public Object sell(Context ctx) {
 
-        String userId = ctx.session().get("userId").value();
+        String userId = ctx.session().get("userId").value((String) null);
+        if (userId == null) {
+            ctx.setResponseCode(StatusCode.UNAUTHORIZED);
+            return Collections.singletonMap("error", "Not logged in");
+        }
         User user = users.findById(userId);
 
         Account account = user.getAccount();
@@ -425,14 +433,11 @@ public class InvestmentController {
             int pence = currentPriceService.getPricePence(t);
             double price = pence > 0 ? pence / 100.0 : 0.0;
 
-            // ⭐ Build a single string
             String display = t + " - £" + String.format("%.2f", price);
-
             tickerOptions.add(display);
         }
 
         model.put("tickerOptions", tickerOptions);
-
 
         String error = ctx.query("error").value((String) null);
         model.put("error", error);
