@@ -9,7 +9,6 @@ import java.nio.file.*;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
 
-import uk.co.asepstrath.bank.evaluation.CurrentPriceLoader;
 import uk.co.asepstrath.bank.evaluation.CurrentPriceService;
 
 public class UserServiceTests {
@@ -22,6 +21,7 @@ public class UserServiceTests {
 
     @BeforeEach
     void setup() throws Exception {
+        // Create a temporary CSV file for this test only
         csvFile = tempDir.resolve("users.csv");
 
         Files.writeString(csvFile, """
@@ -30,11 +30,11 @@ public class UserServiceTests {
                 00000000-0000-0002-cccc-dddd,bob,secret,50
                 """);
 
-        Path workingCsv = Path.of("users.csv").toAbsolutePath();
-        Files.copy(csvFile, workingCsv, StandardCopyOption.REPLACE_EXISTING);
-
+        // Mock CurrentPriceService (we don't need real prices for user tests)
         CurrentPriceService cps = mock(CurrentPriceService.class);
-        service = new UserService(cps);
+
+        // Inject the temp CSV path — this is the key fix
+        service = new UserService(cps, csvFile);
     }
 
     @Test
@@ -64,14 +64,13 @@ public class UserServiceTests {
 
     @Test
     void testCreateUser() throws Exception {
-        Files.createDirectories(Path.of("UserStats"));
-
         service.createUser("charlie", "mypw");
 
-        String csv = Files.readString(Path.of("users.csv"));
+        String csv = Files.readString(csvFile);
+
         assertTrue(csv.contains("charlie"));
         assertTrue(csv.contains("mypw"));
-        assertTrue(csv.contains("0"));
+        assertTrue(csv.contains("0")); // starting balance
     }
 
     @Test
@@ -99,7 +98,7 @@ public class UserServiceTests {
         User updatedBob = service.findById(bob.getId());
         assertEquals(999, updatedBob.getBalancePence());
 
-        String csv = Files.readString(Path.of("users.csv"));
+        String csv = Files.readString(csvFile);
         assertTrue(csv.contains("bob"));
         assertTrue(csv.contains("999"));
     }

@@ -10,15 +10,22 @@ import uk.co.asepstrath.bank.evaluation.CurrentPriceService;
 
 public class UserService {
 
-    private final Path csvPath = Path.of("users.csv");
+    private final Path csvPath;
     private final Map<String, User> users = new HashMap<>();
 
     private static final String LAST_ID_FILE = "UserStats/lastId.txt";
 
     private final CurrentPriceService currentPriceService;
 
+    /** Production constructor — uses real users.csv */
     public UserService(CurrentPriceService currentPriceService) {
+        this(currentPriceService, Path.of("users.csv"));
+    }
+
+    /** Test-safe constructor — allows injecting a temp CSV path */
+    public UserService(CurrentPriceService currentPriceService, Path csvPath) {
         this.currentPriceService = currentPriceService;
+        this.csvPath = csvPath;
         loadUsers();
     }
 
@@ -55,16 +62,20 @@ public class UserService {
     }
 
     private void saveUsers() {
-        try (PrintWriter out = new PrintWriter(Files.newBufferedWriter(csvPath))) {
-            out.println("id,name,passwordHash,balancePence");
+        try {
+            Files.createDirectories(csvPath.getParent() != null ? csvPath.getParent() : Path.of("."));
 
-            for (User u : users.values()) {
-                out.printf("%s,%s,%s,%d%n",
-                        u.getId(),
-                        u.getName(),
-                        u.getPassword(),
-                        u.getBalancePence()
-                );
+            try (PrintWriter out = new PrintWriter(Files.newBufferedWriter(csvPath))) {
+                out.println("id,name,passwordHash,balancePence");
+
+                for (User u : users.values()) {
+                    out.printf("%s,%s,%s,%d%n",
+                            u.getId(),
+                            u.getName(),
+                            u.getPassword(),
+                            u.getBalancePence()
+                    );
+                }
             }
 
         } catch (IOException e) {
