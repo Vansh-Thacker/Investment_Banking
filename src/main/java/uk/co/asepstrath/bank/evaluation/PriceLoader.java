@@ -2,11 +2,8 @@ package uk.co.asepstrath.bank.evaluation;
 
 import java.io.BufferedReader;
 import java.io.FileReader;
-import java.nio.file.*;
 import java.time.LocalDateTime;
 import java.util.*;
-
-import ru.justagod.scapi.models.PriceEntry;
 
 public class PriceLoader {
 

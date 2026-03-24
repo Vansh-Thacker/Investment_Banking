@@ -7,13 +7,9 @@ import io.jooby.netty.NettyServer;
 import uk.co.asepstrath.bank.cash.CashController;
 import uk.co.asepstrath.bank.Account;
 import uk.co.asepstrath.bank.cash.CashController_;
-import uk.co.asepstrath.bank.evaluation.AsepApiClient;
 import uk.co.asepstrath.bank.evaluation.CurrentPriceLoader;
 import uk.co.asepstrath.bank.evaluation.CurrentPriceService;
-import uk.co.asepstrath.bank.evaluation.EvaluationController;
-import uk.co.asepstrath.bank.evaluation.EvaluationPortfolioLoader;
 import uk.co.asepstrath.bank.evaluation.EquitiesService;
-import uk.co.asepstrath.bank.evaluation.PortfolioEvaluationService;
 import uk.co.asepstrath.bank.evaluation.PriceService;
 import uk.co.asepstrath.bank.investments.InvestmentController;
 import uk.co.asepstrath.bank.investments.InvestmentController_;
@@ -93,22 +89,6 @@ public class App extends Jooby {
         if (asepBaseUrl == null || asepBaseUrl.isBlank()) {
             asepBaseUrl = getConfig().getString("asep.baseUrl");
         }
-        AsepApiClient asepClient = new AsepApiClient(asepBaseUrl.trim());
-        EvaluationPortfolioLoader evaluationPortfolioLoader = new EvaluationPortfolioLoader(users);
-        PortfolioEvaluationService portfolioEvaluationService =
-                new PortfolioEvaluationService(equitiesService, asepClient);
-        EvaluationController evaluationController =
-                new EvaluationController(portfolioEvaluationService, evaluationPortfolioLoader);
-        get("/evaluation/portfolio/snapshot", ctx -> evaluationController.portfolioSnapshot(ctx));
-        get("/evaluation/portfolio/performance", ctx -> evaluationController.portfolioPerformanceOverview(ctx));
-        get("/evaluation/positions/average-book-price", ctx -> evaluationController.averageBookPriceOverview(ctx));
-        get("/evaluation/positions/cost-basis", ctx -> evaluationController.costBasisOverview(ctx));
-        get("/evaluation/positions/prior-day-eod", ctx -> evaluationController.priorDayEodOverview(ctx));
-        get("/evaluation/positions/market-value", ctx -> evaluationController.marketValueOverview(ctx));
-        get("/evaluation/positions/value-at-prior-close", ctx -> evaluationController.valueAtPriorCloseOverview(ctx));
-        get("/evaluation/positions/unrealized-pnl", ctx -> evaluationController.unrealizedPnLOverview(ctx));
-        get("/evaluation/positions/unrealized-gains-losses", ctx -> evaluationController.unrealizedGainsLossesOverview(ctx));
-        get("/evaluation/positions/gains-losses", ctx -> evaluationController.absoluteAndPercentageGainsLossesOverview(ctx));
 
 
         /*
