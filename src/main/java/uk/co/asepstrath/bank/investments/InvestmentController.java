@@ -14,6 +14,9 @@ import uk.co.asepstrath.bank.user.User;
 import uk.co.asepstrath.bank.user.UserService;
 
 import javax.sql.DataSource;
+
+import static org.mockito.Mockito.mock;
+
 import java.util.*;
 
 @Path("/investments")
@@ -38,6 +41,29 @@ public class InvestmentController {
         this.priceService = priceService;
         this.equitiesService = equitiesService;
         this.currentPriceService = currentPriceService;
+    }
+
+    private InvestmentController newController(
+            UserService users,
+            PriceService priceService,
+            EquitiesService equitiesService,
+            CurrentPriceService currentPriceService,
+            Account account
+    ) {
+        Logger log = mock(Logger.class);
+        DataSource ds = mock(DataSource.class);
+
+        InvestmentController c = new InvestmentController(
+                ds,                 // 1
+                log,                // 2
+                account,            // 3
+                priceService,       // 4
+                equitiesService,    // 5
+                currentPriceService // 6
+        );
+
+        c.setUserService(users);
+        return c;
     }
 
     public void setUserService(UserService users) {

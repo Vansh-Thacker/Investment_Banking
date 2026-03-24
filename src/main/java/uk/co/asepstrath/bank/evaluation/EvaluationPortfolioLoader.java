@@ -32,7 +32,13 @@ public class EvaluationPortfolioLoader {
         }
         Account account = new Account();
         account.forceSetBalance(user.getBalancePence());
-        InvestmentService loaded = new InvestmentService(account, currentPriceLoader);
+        
+        InvestmentService loaded = new InvestmentService(
+            account,
+            currentPriceService,   // correct type
+            "UserStats/" + userId + "/history.csv"   // required CSV path
+        );
+
         PriceLoader priceLoader = new PriceLoader("prices.csv");
         Path p = Paths.get("UserStats/" + userId + "/history.csv");
         try {

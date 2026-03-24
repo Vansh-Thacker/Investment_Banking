@@ -7,6 +7,10 @@ import java.io.*;
 import java.nio.file.*;
 
 import static org.junit.jupiter.api.Assertions.*;
+import static org.mockito.Mockito.*;
+
+import uk.co.asepstrath.bank.evaluation.CurrentPriceLoader;
+import uk.co.asepstrath.bank.evaluation.CurrentPriceService;
 
 public class UserServiceTests {
 
@@ -20,18 +24,17 @@ public class UserServiceTests {
     void setup() throws Exception {
         csvFile = tempDir.resolve("users.csv");
 
-        // Pre-populate CSV in the correct format:
-        // id,name,passwordHash,balancePence
-        Files.write(csvFile, """
+        Files.writeString(csvFile, """
                 id,name,passwordHash,balancePence
                 00000000-0000-0001-aaaa-bbbb,alice,pass123,100
                 00000000-0000-0002-cccc-dddd,bob,secret,50
-                """.getBytes());
+                """);
 
-        // Copy this CSV into working directory so UserService loads it
-        Files.copy(csvFile, Path.of("users.csv"), StandardCopyOption.REPLACE_EXISTING);
+        Path workingCsv = Path.of("users.csv").toAbsolutePath();
+        Files.copy(csvFile, workingCsv, StandardCopyOption.REPLACE_EXISTING);
 
-        service = new UserService();
+        CurrentPriceService cps = mock(CurrentPriceService.class);
+        service = new UserService(cps);
     }
 
     @Test
@@ -41,44 +44,40 @@ public class UserServiceTests {
     }
 
     @Test
-    void testAuthenticateSuccess() {
-        // Your new UserService does NOT have authenticate()
-        // So we replicate the LoginController logic:
+    void testFindByNameLoadsPasswordCorrectly() {
         User u = service.findByName("alice");
-
         assertNotNull(u);
         assertEquals("pass123", u.getPassword());
     }
 
     @Test
-    void testAuthenticateFailWrongPassword() {
+    void testPasswordDoesNotMatchWrongValue() {
         User u = service.findByName("alice");
-
         assertNotNull(u);
         assertNotEquals("wrong", u.getPassword());
     }
 
     @Test
-    void testAuthenticateFailNoUser() {
+    void testFindByNameReturnsNullForMissingUser() {
         assertNull(service.findByName("nobody"));
     }
 
     @Test
     void testCreateUser() throws Exception {
+        Files.createDirectories(Path.of("UserStats"));
+
         service.createUser("charlie", "mypw");
 
-        // Reload CSV
         String csv = Files.readString(Path.of("users.csv"));
-
         assertTrue(csv.contains("charlie"));
         assertTrue(csv.contains("mypw"));
-        assertTrue(csv.contains("0")); // starting balance
+        assertTrue(csv.contains("0"));
     }
 
     @Test
     void testCreateUserDuplicateThrows() {
-        assertThrows(IllegalArgumentException.class, () ->
-                service.createUser("alice", "whatever"));
+        assertThrows(IllegalArgumentException.class,
+                () -> service.createUser("alice", "whatever"));
     }
 
     @Test
@@ -87,8 +86,7 @@ public class UserServiceTests {
         assertNotNull(alice);
         assertEquals(100, alice.getBalancePence());
 
-        User ghost = service.findByName("ghost");
-        assertNull(ghost);
+        assertNull(service.findByName("ghost"));
     }
 
     @Test

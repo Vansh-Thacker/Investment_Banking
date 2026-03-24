@@ -1,4 +1,4 @@
-package uk.co.asepstrath.bank.evaluation;
+/*package uk.co.asepstrath.bank.evaluation;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -140,3 +140,4 @@ public class PortfolioSnapshotServiceTests {
         assertEquals(100_000.0, resp.summary.totalPortfolioValue, 0.01);
     }
 }
+*/

@@ -88,6 +88,10 @@ public class UserService {
     }
 
     public User createUser(String name, String password) {
+        if (nameExists(name)) {
+            throw new IllegalArgumentException("User already exists");
+        }
+
         String id = generateId();
         int balance = 0;
 
