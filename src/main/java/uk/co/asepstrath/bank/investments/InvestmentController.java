@@ -178,7 +178,12 @@ public class InvestmentController {
             ctx.setResponseCode(StatusCode.UNAUTHORIZED);
             return Collections.singletonMap("error", "Not logged in");
         }
+
         User user = users.findById(userId);
+        if (user == null) {
+            ctx.setResponseCode(StatusCode.UNAUTHORIZED);
+            return Collections.singletonMap("error", "Not logged in");
+        }
 
         Account account = user.getAccount();
         InvestmentService inv = user.getInvestmentService();
@@ -269,7 +274,12 @@ public class InvestmentController {
             ctx.setResponseCode(StatusCode.UNAUTHORIZED);
             return Collections.singletonMap("error", "Not logged in");
         }
+
         User user = users.findById(userId);
+        if (user == null) {
+            ctx.setResponseCode(StatusCode.UNAUTHORIZED);
+            return Collections.singletonMap("error", "Not logged in");
+        }
 
         Account account = user.getAccount();
         InvestmentService service = user.getInvestmentService();
