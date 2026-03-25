@@ -23,6 +23,9 @@ import uk.co.asepstrath.bank.user.LoginController_;
 import uk.co.asepstrath.bank.user.UserService;
 import uk.co.asepstrath.bank.portfolio.PortfolioEquityData;
 
+//import kong.unirest.modules.gson.GsonObjectMapper;
+import kong.unirest.core.Unirest;
+
 import javax.sql.DataSource;
 import java.sql.Connection;
 import java.sql.SQLException;
@@ -34,6 +37,7 @@ public class App extends Jooby {
         /*
         This section is used for setting up the Jooby Framework modules
          */
+        //Unirest.config().setObjectMapper(new GsonObjectMapper());
         install(new UniRestExtension());
         install(new HandlebarsModule());
         install(new HikariModule("mem"));
