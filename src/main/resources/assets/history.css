@@ -1,10 +1,11 @@
 :root {
-    --bg-deep: #0f172a;
-    --bg-surface: #1e293b;
+    --bg-deep: #0a0f1a;
+    --bg-surface: #162032;
     --accent: #3b82f6;
+    --accent-hover: #2563eb;
     --text-primary: #f8fafc;
     --text-secondary: #94a3b8;
-    --border: #334155;
+    --border: #2b3a4f;
 }
 
 body.auth-page {
@@ -12,9 +13,10 @@ body.auth-page {
     justify-content: center;
     align-items: flex-start;
     min-height: 100vh;
-    background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%);
+    background: linear-gradient(135deg, var(--bg-surface) 0%, var(--bg-deep) 100%);
     padding-top: 60px;
     margin: 0;
+    font-family: Arial, sans-serif;
 }
 
 .top-nav {
@@ -30,9 +32,13 @@ body.auth-page {
     font-weight: 600;
 }
 
+.top-nav a:hover {
+    color: var(--accent-hover);
+}
+
 .auth-form {
     width: 700px;
-    background: #0f172a;
+    background: var(--bg-deep);
     padding: 2rem;
     border-radius: 16px;
     border: 1px solid var(--border);
@@ -43,6 +49,25 @@ body.auth-page {
     color: var(--text-primary);
     margin-bottom: 1.5rem;
     text-align: center;
+}
+
+.filter-row {
+    margin-bottom: 1rem;
+    text-align: center;
+}
+
+.filter-btn {
+    background: var(--bg-surface);
+    color: var(--text-primary);
+    border: 1px solid var(--border);
+    padding: 8px 16px;
+    margin: 0 4px;
+    border-radius: 6px;
+    cursor: pointer;
+}
+
+.filter-btn:hover {
+    background: var(--accent-hover);
 }
 
 .history-table {
@@ -64,5 +89,5 @@ body.auth-page {
 }
 
 .history-table tr:nth-child(even) {
-    background: #1b2536;
+    background: var(--bg-surface);
 }
