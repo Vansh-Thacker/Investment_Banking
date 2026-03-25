@@ -15,6 +15,7 @@ public class InvestmentTransaction {
     public Double realizedGainLoss;
     public Integer sharesAfter;
     public String stockName;
+    public String formattedTimestamp;  //// FOR CAPITAL GAINS
 
     private static final NumberFormat GBP = NumberFormat.getCurrencyInstance(Locale.UK);
 
@@ -80,4 +81,11 @@ public class InvestmentTransaction {
     public String getTicker() {
         return ticker;
     }
+
+    public LocalDateTime getTimestamp() { return timestamp; }
+    public int getShares() { return shares; }
+    public double getPrice() { return price; }
+    public double getProceeds() { return proceeds; }
+    public Double getRealizedGainLoss() { return realizedGainLoss; }
+    public String getFormattedTimestamp() { return formattedTimestamp; }
 }
