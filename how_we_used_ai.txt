@@ -1,0 +1,9 @@
+Throughout the development of the ScotBank project, our group made targeted use of AI tools to support and speed up our workflow as well as improve the quality of our code. We primarily used AI as a learning and debugging aid in areas where we lacked prior experience or where problems became too time‑consuming to resolve manually or via google.
+
+AI assisted us in understanding how to work effectively with the Jooby framework, helping us interpret documentation, clarify unfamiliar concepts, and identify correct patterns for structuring our routes and services. We also relied on AI to guide us through writing Mockito tests, particularly when we needed examples of correct mocking behaviour or explanations of how specific testing patterns should be implemented.
+
+In addition to guidance, we used AI to generate initial versions of our unit tests. These AI‑generated tests served as a foundation that we then reviewed, adapted, and refined to ensure they aligned with our project requirements.
+
+Finally, AI played a valuable role in debugging. When we encountered errors that were difficult to trace, we used AI to inspect sections of our code and highlight potential causes. This helped us narrow down issues more efficiently and focus our debugging efforts on the most likely problem areas.
+
+Overall, AI functioned as a supplementary tool that supported our learning, accelerated our testing processes, and improved our ability to diagnose complex issues during the development of ScotBank.
