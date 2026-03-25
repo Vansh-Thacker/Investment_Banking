@@ -1,7 +1,6 @@
 package uk.co.asepstrath.bank.cash;
 import io.jooby.Context;
 import io.jooby.Jooby;
-import io.jooby.annotation.*;
 import io.jooby.ModelAndView;
 import io.jooby.annotation.*;
 import org.slf4j.Logger;
@@ -9,9 +8,12 @@ import org.slf4j.Logger;
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import uk.co.asepstrath.bank.Account;
 import uk.co.asepstrath.bank.user.UserService;
+import uk.co.asepstrath.bank.portfolio.PortfolioService;
+import uk.co.asepstrath.bank.portfolio.PortfolioBreakdown;
 
 
 @Path("/cash")
@@ -19,6 +21,7 @@ public class CashController extends Jooby {
 
     private UserService users;
     private final CashService service;
+    private final PortfolioService portfolioService = new PortfolioService("uk", "Europe", "Finance");
 
     public CashController(Logger log, Account account) {
         this(log, account, new CashService(account));
@@ -151,10 +154,31 @@ public class CashController extends Jooby {
         }
 
 
+        // Build the same portfolio breakdown model as /portfolio
+        List<Map<String, Object>> equities = portfolioService.getAllEquities();
+
+        double grandTotal = 0;
+        for (Map<String, Object> eq : equities) {
+            try {
+                grandTotal += Double.parseDouble(eq.getOrDefault("marketCap", 0).toString());
+            } catch (NumberFormatException ignored) {}
+        }
+
+        List<PortfolioBreakdown> countryData  = portfolioService.getBreakdown(equities, "country");
+        List<PortfolioBreakdown> regionData   = portfolioService.getBreakdown(equities, "region");
+        List<PortfolioBreakdown> industryData = portfolioService.getBreakdown(equities, "sector");
+
         Map<String, Object> model = new HashMap<>();
+        model.put("user", username);
+        model.put("equities", equities);
+        model.put("totalValue", String.format("%.2f", grandTotal));
+        model.put("countries", countryData);
+        model.put("regions", regionData);
+        model.put("industries", industryData);
+
+        // Cash-specific data (not currently displayed by cash.hbs, but useful for future templates)
         model.put("balance", service.getBalance());
         model.put("history", service.getHistory());
-        model.put("name", "Customer");
 
         String error = ctx.query("error").value((String) null);
         model.put("error", error);
