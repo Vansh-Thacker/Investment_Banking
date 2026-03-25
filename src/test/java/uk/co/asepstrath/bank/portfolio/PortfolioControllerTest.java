@@ -34,7 +34,7 @@ class PortfolioControllerTest {
         ModelAndView mav = controller.dashboard(ctx);
         assertNotNull(mav);
         // Matches the return new ModelAndView("dashboard", model) in your controller
-        assertEquals("dashboard", mav.getView());
+        assertEquals("dashboard.hbs", mav.getView());
     }
 
     @Test
