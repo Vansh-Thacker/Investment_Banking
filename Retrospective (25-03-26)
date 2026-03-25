@@ -18,9 +18,11 @@
 -   finalizing the submission documentation
 -   polishing the html front end and ui responsiveness
 -   performing final end-to-end user story walkthroughs
+-   kyc questionaire
+-   ETF Processing
 
 -- what went well --
--   key parts of the initial project have been completed
+-   all core components of the initial project have been completed and tested
 -   everyone consistently showed up to labs and organised meetups
 -   communication was great and the group chemistry was very good
 -   everybody helped each other out to finish all tasks
@@ -30,7 +32,7 @@
 
 -- what to look out for --
 -   do not work on the same code as other teammates
--   we need to make sure everyone fully understands what they have been assigned to
+-   we need to make sure everyone fully understands what they have been assigned to so that teamwork is as smooth as possible and no one has unanswered questions
 -   we need to make sure that when we are doing the ui things we try to use the code we have
-currently done instead of processing things inside the controllers, this goes also goes for new
+currently done instead of processing things inside the controllers, this also goes for new
 features we do not realise that we are missing, all the logic should go outside of the controllers
