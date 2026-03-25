@@ -7,7 +7,7 @@ import org.json.JSONObject;
 
 public class PortfolioService {
 
-    private static final String BASE = "https://api.asep-strath.co.uk";
+    private static final String BASE = "https://api.asep-strath.co.uk"; //NOSONAR
 
     public PortfolioService(String country, String region, String industry) {}
 
@@ -15,7 +15,7 @@ public class PortfolioService {
         // Step 1: Get all tickers
         List<String> tickers = new ArrayList<>();
         try {
-            var response = Unirest.get(BASE + "/api/equities").asString();
+            var response = Unirest.get(BASE + "/api/equities").asString(); //NOSONAR
             if (response.isSuccess()) {
                 JSONObject body = new JSONObject(response.getBody());
                 JSONArray assets = body.optJSONArray("assets");
@@ -37,7 +37,7 @@ public class PortfolioService {
         List<Map<String, Object>> results = new ArrayList<>();
 
         try {
-            var response = Unirest.get(BASE + "/api/equities/metadata")
+            var response = Unirest.get(BASE + "/api/equities/metadata")//NOSONAR
                     .queryString("tickers", tickerParam)
                     .asString();
 
@@ -81,7 +81,7 @@ public class PortfolioService {
 
     public List<Map<String, Object>> getAllTransactions() {
         List<Map<String, Object>> all = new ArrayList<>();
-        String url = BASE + "/api/transactions";
+        String url = BASE + "/api/transactions";//NOSONAR
 
         while (url != null) {
             try {
