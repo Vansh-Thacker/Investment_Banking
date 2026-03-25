@@ -4,8 +4,8 @@ import io.jooby.Cookie;
 import io.jooby.ServerOptions;
 import io.jooby.SessionStore;
 import io.jooby.netty.NettyServer;
+import uk.co.asepstrath.bank.capitalgains.CapitalGainsController;
 import uk.co.asepstrath.bank.cash.CashController;
-import uk.co.asepstrath.bank.Account;
 import uk.co.asepstrath.bank.cash.CashController_;
 import uk.co.asepstrath.bank.evaluation.CurrentPriceLoader;
 import uk.co.asepstrath.bank.evaluation.CurrentPriceService;
@@ -13,15 +13,14 @@ import uk.co.asepstrath.bank.evaluation.EquitiesService;
 import uk.co.asepstrath.bank.evaluation.PriceService;
 import uk.co.asepstrath.bank.investments.InvestmentController;
 import uk.co.asepstrath.bank.investments.InvestmentController_;
-import uk.co.asepstrath.bank.investments.InvestmentService;
 import io.jooby.Jooby;
 import io.jooby.handlebars.HandlebarsModule;
 import io.jooby.helper.UniRestExtension;
 import io.jooby.hikari.HikariModule;
 import org.slf4j.Logger;
-import uk.co.asepstrath.bank.user.LoginController;
 import uk.co.asepstrath.bank.user.LoginController_;
 import uk.co.asepstrath.bank.user.UserService;
+import uk.co.asepstrath.bank.capitalgains.CapitalGainsController_;
 
 import javax.sql.DataSource;
 import java.sql.Connection;
@@ -53,13 +52,13 @@ public class App extends Jooby {
 
         Account account = new Account();
 
+
         // --- Current prices (single source of truth) ---
         CurrentPriceLoader currentPriceLoader = new CurrentPriceLoader("currentprices.csv");
         CurrentPriceService currentPriceService = new CurrentPriceService(currentPriceLoader);
 
         // --- UserService now needs CurrentPriceService ---
         UserService users = new UserService(currentPriceService);
-
         // --- Cash controller ---
         CashController cash = new CashController(log, account);
         cash.setUserService(users);
@@ -84,11 +83,15 @@ public class App extends Jooby {
         });
 
 
-        
+
         String asepBaseUrl = System.getenv("ASEP_BASE_URL");
         if (asepBaseUrl == null || asepBaseUrl.isBlank()) {
             asepBaseUrl = getConfig().getString("asep.baseUrl");
         }
+
+        CapitalGainsController cg = new CapitalGainsController(log, users);
+        mvc(new CapitalGainsController_(cg));
+
 
 
         /*

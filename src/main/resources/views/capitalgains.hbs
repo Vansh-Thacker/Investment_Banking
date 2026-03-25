@@ -1,0 +1,132 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <link rel="stylesheet" href="/assets/investments.css">
+    <title>Capital Gains | Titan Invest</title>
+</head>
+
+<body class="invest-page">
+
+<nav class="top-nav">
+    <a href="/cash/cashsidefrontend">Cash Dashboard</a>
+    <a href="/investments">Investments</a>
+    <a href="/capitalgains/summary">Capital Gains</a>
+    <a href="/logout">Logout</a>
+</nav>
+
+<section class="invest-container">
+    <h2>Capital Gains Summary</h2>
+
+    <!-- TAX YEAR SELECTOR -->
+    <form method="get" action="/capitalgains/summary" style="margin-bottom: 20px; text-align:center;">
+
+            {{#each years}}
+                <option value="{{startYear}}" {{#if selected}}selected{{/if}}>
+                    {{label}}
+                </option>
+            {{/each}}
+
+
+        </select>
+    </form>
+
+    <!-- YTD REALISED GAINS -->
+    <div class="cash-box">
+        <p class="label">YTD Realised Gains</p>
+        <p class="value">£<span id="ytd-gains">{{summary.netGain}}</span></p>
+    </div>
+
+    <!-- SUMMARY BOX -->
+    <div class="stats-box">
+        <div class="stat-row">
+            <span>Total Gains</span>
+            <span class="gbp">{{summary.totalGains}}</span>
+        </div>
+
+        <div class="stat-row">
+            <span>Total Losses</span>
+            <span class="gbp">{{summary.totalLosses}}</span>
+        </div>
+
+        <div class="stat-row">
+            <span>Net Gain</span>
+            <span class="gbp pnl">{{summary.netGain}}</span>
+        </div>
+
+        <div class="stat-row">
+            <span>Allowance Used</span>
+            <span class="gbp">{{summary.allowanceUsed}}</span>
+        </div>
+
+        <div class="stat-row">
+            <span>Allowance Remaining</span>
+            <span class="gbp">{{summary.allowanceRemaining}}</span>
+        </div>
+
+        <div class="stat-row">
+            <span>Taxable Gain</span>
+            <span class="gbp">{{summary.taxableGain}}</span>
+        </div>
+
+        <div class="stat-row">
+            <span>Tax Rate</span>
+            <span>{{summary.taxRate}}%</span>
+        </div>
+
+        <div class="stat-row">
+            <span>Tax Owed</span>
+            <span class="gbp">{{summary.taxOwed}}</span>
+        </div>
+    </div>
+
+    <div class="action-row">
+        <a class="btn" href="/capitalgains/transactions?year={{selectedYear.startYear}}">
+            View Realised Transactions
+        </a>
+    </div>
+</section>
+
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+
+    // YTD Gains
+    const ytd = document.getElementById('ytd-gains');
+    if (ytd) {
+        const val = parseFloat(ytd.textContent.trim());
+        if (!isNaN(val)) {
+            if (val > 0) ytd.style.color = "#22c55e";
+            else if (val < 0) ytd.style.color = "#ef4444";
+            else ytd.style.color = "#94a3b8";
+
+            ytd.textContent = val.toFixed(2);
+        }
+    }
+
+    // Format GBP cells
+    document.querySelectorAll('.gbp').forEach(cell => {
+        const raw = parseFloat(cell.textContent.trim());
+        if (!isNaN(raw)) {
+            cell.textContent = raw.toFixed(2);
+        }
+    });
+
+    // Colour P/L cells
+    document.querySelectorAll('.pnl').forEach(cell => {
+        const val = parseFloat(cell.textContent.trim());
+        if (isNaN(val)) return;
+
+        if (val > 0) cell.style.color = "#22c55e";
+        else if (val < 0) cell.style.color = "#ef4444";
+        else cell.style.color = "#94a3b8";
+
+        cell.textContent = val.toFixed(2);
+    });
+
+});
+</script>
+
+</body>
+</html>
+
+

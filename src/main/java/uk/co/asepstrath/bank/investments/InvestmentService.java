@@ -303,6 +303,8 @@ public class InvestmentService {
         int costBasis = pos.averageBookPrice * shares;
         int proceedsPence = (int) Math.round(shares * price * 100);
 
+        double realizedGainLoss = (proceedsPence - costBasis) / 100.0;
+
         account.deposit(proceedsPence);
 
         pos.totalInvested -= costBasis;
@@ -313,7 +315,7 @@ public class InvestmentService {
             pos.averageBookPrice = pos.totalInvested / pos.shares;
         }
 
-        record(TYPE_SELL, ticker, shares, price, pos.shares);
+        record(TYPE_SELL, ticker, shares, price, pos.shares, realizedGainLoss);
 
         SellConfirmation c = new SellConfirmation();
         c.ticker = ticker;
@@ -378,7 +380,7 @@ public class InvestmentService {
        RECORD HELPERS
        ============================================================ */
 
-    private void record(String type, String ticker, int shares, double price, int sharesAfter) {
+    private void record(String type, String ticker, int shares, double price, int sharesAfter, Double realizedGainLoss) {
         InvestmentTransaction tx = new InvestmentTransaction();
         tx.timestamp = LocalDateTime.now();
         tx.type = type;
@@ -387,7 +389,18 @@ public class InvestmentService {
         tx.price = price;
         tx.sharesAfter = sharesAfter;
 
+        tx.realizedGainLoss = realizedGainLoss;
+
+        if ("SELL".equals(type)) {
+            tx.proceeds = shares * price;
+        }
+
+
         history.add(tx);
         writeHistoryToCsv();
     }
+    private void record(String type, String ticker, int shares, double price, int sharesAfter) {
+        record(type, ticker, shares, price, sharesAfter, null);
+    }
+
 }
