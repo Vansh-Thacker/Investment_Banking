@@ -186,3 +186,34 @@ body.invest-page {
 .filter-btn:hover {
     background-color: var(--accent-hover);
 }
+
+
+/* CAPITAL GAINS SECTION */
+
+.stats-box {
+    background: var(--bg-surface);
+    padding: 1.5rem;
+    border-radius: 12px;
+    border: 1px solid var(--border);
+    margin-bottom: 2rem;
+}
+
+.stat-row {
+    display: flex;
+    justify-content: space-between;
+    padding: 8px 0;
+    color: var(--text-primary);
+    border-bottom: 1px solid var(--border);
+}
+
+.stat-row:last-child {
+    border-bottom: none;
+}
+
+.stat-row span:first-child {
+    color: var(--text-secondary);
+}
+
+.pnl {
+    font-weight: 700;
+}

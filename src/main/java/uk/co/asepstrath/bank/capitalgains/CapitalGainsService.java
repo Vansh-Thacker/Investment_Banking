@@ -7,6 +7,7 @@ import java.io.BufferedReader;
 import java.io.FileReader;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.*;
 
 import java.util.*;
@@ -233,9 +234,15 @@ public class CapitalGainsService {
     public List<InvestmentTransaction> getRealisedTransactionsForYear(int startYear) {
         List<InvestmentTransaction> list = new ArrayList<>();
 
+        DateTimeFormatter fmt = DateTimeFormatter.ofPattern("dd MMM yyyy HH:mm");
+
         for (InvestmentTransaction tx : transactions) {
             if (!"SELL".equals(tx.type)) continue;
             if (TaxYearInfo.getTaxYearStart(tx.timestamp) == startYear) {
+
+                // Add formatted timestamp for the HBS template
+                tx.formattedTimestamp = tx.timestamp.format(fmt);
+
                 list.add(tx);
             }
         }

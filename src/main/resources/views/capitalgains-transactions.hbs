@@ -18,7 +18,7 @@
 <section class="invest-container">
     <h2>Realised Transactions for {{selectedYear.label}}</h2>
 
-    {{#if transactions.length}}
+    {{#if transactions}}
     <table class="portfolio-table">
         <thead>
             <tr>
@@ -34,7 +34,7 @@
         <tbody>
         {{#each transactions}}
             <tr>
-                <td>{{timestamp}}</td>
+                <td>{{formattedTimestamp}}</td>
                 <td>{{ticker}}</td>
                 <td>{{shares}}</td>
                 <td class="gbp">{{price}}</td>
@@ -86,4 +86,3 @@ document.addEventListener('DOMContentLoaded', function () {
 
 </body>
 </html>
-

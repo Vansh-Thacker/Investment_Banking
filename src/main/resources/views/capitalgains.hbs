@@ -42,15 +42,46 @@
     </div>
 
     <!-- SUMMARY BOX -->
-    <div class="cash-box">
-        <p><strong>Total Gains:</strong> £{{summary.totalGains}}</p>
-        <p><strong>Total Losses:</strong> £{{summary.totalLosses}}</p>
-        <p><strong>Net Gain:</strong> £{{summary.netGain}}</p>
-        <p><strong>Allowance Used:</strong> £{{summary.allowanceUsed}}</p>
-        <p><strong>Allowance Remaining:</strong> £{{summary.allowanceRemaining}}</p>
-        <p><strong>Taxable Gain:</strong> £{{summary.taxableGain}}</p>
-        <p><strong>Tax Rate:</strong> {{summary.taxRate}}%</p>
-        <p><strong>Tax Owed:</strong> £{{summary.taxOwed}}</p>
+    <div class="stats-box">
+        <div class="stat-row">
+            <span>Total Gains</span>
+            <span class="gbp">{{summary.totalGains}}</span>
+        </div>
+
+        <div class="stat-row">
+            <span>Total Losses</span>
+            <span class="gbp">{{summary.totalLosses}}</span>
+        </div>
+
+        <div class="stat-row">
+            <span>Net Gain</span>
+            <span class="gbp pnl">{{summary.netGain}}</span>
+        </div>
+
+        <div class="stat-row">
+            <span>Allowance Used</span>
+            <span class="gbp">{{summary.allowanceUsed}}</span>
+        </div>
+
+        <div class="stat-row">
+            <span>Allowance Remaining</span>
+            <span class="gbp">{{summary.allowanceRemaining}}</span>
+        </div>
+
+        <div class="stat-row">
+            <span>Taxable Gain</span>
+            <span class="gbp">{{summary.taxableGain}}</span>
+        </div>
+
+        <div class="stat-row">
+            <span>Tax Rate</span>
+            <span>{{summary.taxRate}}%</span>
+        </div>
+
+        <div class="stat-row">
+            <span>Tax Owed</span>
+            <span class="gbp">{{summary.taxOwed}}</span>
+        </div>
     </div>
 
     <div class="action-row">

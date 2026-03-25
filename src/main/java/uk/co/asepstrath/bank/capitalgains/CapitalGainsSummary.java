@@ -32,6 +32,15 @@ public class CapitalGainsSummary {
         this.taxRate = taxRate;
         this.taxOwed = taxOwed;
     }
+
+    public double getTotalGains() { return totalGains; }
+    public double getTotalLosses() { return totalLosses; }
+    public double getNetGain() { return netGain; }
+    public double getAllowanceUsed() { return allowanceUsed; }
+    public double getAllowanceRemaining() { return allowanceRemaining; }
+    public double getTaxableGain() { return taxableGain; }
+    public double getTaxRate() { return taxRate; }
+    public double getTaxOwed() { return taxOwed; }
 }
 
 
