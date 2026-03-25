@@ -153,3 +153,38 @@ input[type=number]::-webkit-outer-spin-button {
 input[type=number] {
     -moz-appearance: textfield;
 }
+
+/* FIX SCROLLBAR */
+html, body {
+    height: 100%;
+    overflow-y: hidden;
+}
+
+/* MATCH INPUT WIDTHS */
+select,
+input[type="number"] {
+    width: 100%;
+    box-sizing: border-box;
+}
+
+/* CASH BOX IMPROVED */
+.cash-box {
+    background: var(--bg-surface);
+    padding: 1.2rem;
+    border-radius: 12px;
+    border: 1px solid var(--border);
+    margin-bottom: 1.8rem;
+    text-align: center;
+}
+
+.cash-box .label {
+    color: var(--text-secondary);
+    font-size: 0.95rem;
+    margin-bottom: 4px;
+}
+
+.cash-box .value {
+    color: var(--text-primary);
+    font-size: 1.8rem;
+    font-weight: 700;
+}

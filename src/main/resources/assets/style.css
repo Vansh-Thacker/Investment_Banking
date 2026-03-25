@@ -1,11 +1,11 @@
 :root {
-    --bg-deep: #0f172a;
-    --bg-surface: #1e293b;
+    --bg-deep: #0a0f1a;
+    --bg-surface: #162032;
     --accent: #3b82f6;
     --accent-hover: #2563eb;
     --text-primary: #f8fafc;
     --text-secondary: #94a3b8;
-    --border: #334155;
+    --border: #2b3a4f;
 }
 
 body.auth-page {
@@ -13,9 +13,10 @@ body.auth-page {
     justify-content: center;
     align-items: center;
     min-height: 100vh;
-    background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%);
+    background: linear-gradient(135deg, #162032 0%, #0a0f1a 100%);
     padding: 0;
     margin: 0;
+    font-family: Arial, sans-serif;
 }
 
 .top-nav {

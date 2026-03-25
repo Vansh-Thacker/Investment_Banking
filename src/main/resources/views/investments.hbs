@@ -26,7 +26,7 @@
     <div class="action-row">
         <a class="btn" href="/investments/buy">Buy Stock</a>
         <a class="btn" href="/investments/sell">Sell Stock</a>
-        <a class="btn" href="/investments/historyfrontend">Transaction History</a>
+        <a class="btn" href="/investments/historyfrontend">Investment History</a>
     </div>
 
     <!-- PORTFOLIO TABLE -->
@@ -36,7 +36,6 @@
             <th>Shares</th>
             <th>Avg Price (£)</th>
             <th>Total Invested (£)</th>
-            {{!-- <th>Current Price (£)</th> --}}
             <th>Current Value (£)</th>
             <th>P/L (£)</th>
             <th>P/L (%)</th>
@@ -48,7 +47,6 @@
             <td>{{shares}}</td>
             <td class="gbp">{{averageBookPrice}}</td>
             <td class="gbp">{{totalInvested}}</td>
-            {{!-- <td class="gbp">{{currentPrice}}</td> --}}
             <td class="gbp">{{currentValue}}</td>
 
             <!-- P/L -->
