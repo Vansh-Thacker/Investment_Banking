@@ -18,13 +18,15 @@ public class PortfolioController {
 
     @GET
     public ModelAndView dashboard(Context ctx) {
-        //String user = "Test user";
-
+        String user = "Test user";
+        /*
         String user = ctx.session().get("user").value((String) null);
         if (user == null) {
             ctx.sendRedirect("/login");
             return null;
         }
+
+         */
 
 
 
