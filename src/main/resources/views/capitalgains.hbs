@@ -20,10 +20,6 @@
 
     <!-- TAX YEAR SELECTOR -->
     <form method="get" action="/capitalgains/summary" style="margin-bottom: 20px; text-align:center;">
-        <label style="color: var(--text-secondary); margin-right: 8px;">Select Tax Year:</label>
-
-        <select name="year" id="year" onchange="this.form.submit()"
-                style="padding: 6px 10px; border-radius: 6px; background: var(--bg-surface); color: var(--text-primary); border: 1px solid var(--border);">
 
             {{#each years}}
                 <option value="{{startYear}}" {{#if selected}}selected{{/if}}>

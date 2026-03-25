@@ -167,4 +167,26 @@ public class InvestmentTransactionTest {
 
         assertEquals("", tx.getTimestampFormatted());
     }
+
+    @Test
+    void testFieldsAndGetters() {
+        InvestmentTransaction tx = new InvestmentTransaction();
+        tx.timestamp = LocalDateTime.of(2025, 2, 3, 10, 0);
+        tx.ticker = "ABC";
+        tx.type = "SELL";
+        tx.shares = 5;
+        tx.price = 100.0;
+        tx.proceeds = 500.0;
+        tx.realizedGainLoss = 50.0;
+        tx.formattedTimestamp = "03 Feb 2025 10:00";
+
+        assertEquals("ABC", tx.getTicker());
+        assertEquals("SELL", tx.getType());
+        assertEquals(5, tx.getShares());
+        assertEquals(100.0, tx.getPrice());
+        assertEquals(500.0, tx.getProceeds());
+        assertEquals(50.0, tx.getRealizedGainLoss());
+        assertEquals("03 Feb 2025 10:00", tx.getFormattedTimestamp());
+    }
+
 }
