@@ -9,13 +9,11 @@ public class PortfolioService {
 
     private static final String BASE = "https://api.asep-strath.co.uk";
 
-    public PortfolioService(String country, String region, String industry) {
-        // kept for compatibility
-    }
+    public PortfolioService(String country, String region, String industry) {}
 
-    // Fetch all equities from /api/equities
     public List<Map<String, Object>> getAllEquities() {
-        List<Map<String, Object>> results = new ArrayList<>();
+        // Step 1: Get all tickers
+        List<String> tickers = new ArrayList<>();
         try {
             var response = Unirest.get(BASE + "/api/equities").asString();
             if (response.isSuccess()) {
@@ -23,21 +21,51 @@ public class PortfolioService {
                 JSONArray assets = body.optJSONArray("assets");
                 if (assets != null) {
                     for (int i = 0; i < assets.length(); i++) {
+                        String ticker = assets.getJSONObject(i).optString("ticker", "");
+                        if (!ticker.isEmpty()) tickers.add(ticker);
+                    }
+                }
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+
+        if (tickers.isEmpty()) return new ArrayList<>();
+
+        // Step 2: Batch metadata call — response uses "assets" not "data"
+        String tickerParam = String.join(",", tickers);
+        List<Map<String, Object>> results = new ArrayList<>();
+
+        try {
+            var response = Unirest.get(BASE + "/api/equities/metadata")
+                    .queryString("tickers", tickerParam)
+                    .asString();
+
+            if (response.isSuccess()) {
+                JSONObject body = new JSONObject(response.getBody());
+
+                // FIX: API returns "assets" not "data"
+                JSONArray assets = body.optJSONArray("assets");
+
+                if (assets != null) {
+                    for (int i = 0; i < assets.length(); i++) {
                         JSONObject eq = assets.getJSONObject(i);
+
+                        String country = eq.optString("country", "Unknown");
+                        String region  = eq.optString("region",  "Unknown");
+                        if (region.isEmpty() || region.equals("Unknown")) {
+                            region = RegionMapper.Regionmap(country);
+                        }
+
                         Map<String, Object> map = new HashMap<>();
-                        map.put("ticker", eq.optString("ticker", "Unknown"));
-                        map.put("name",   eq.optString("name",   "Unknown"));
-                        map.put("sector", eq.optString("sector", "Unknown"));
-                        // Fetch latest price for this equity
-                        double price = getLatestPrice(eq.optString("ticker", ""));
-                        map.put("price", price);
-                        // We don't have shares from this endpoint - default 0
-                        // This will be overridden when we join with transactions
-                        map.put("shares", 0);
-                        map.put("marketCap", price);
-                        // No country/region from this API - mark unknown
-                        map.put("country", "Unknown");
-                        map.put("region",  "Unknown");
+                        map.put("ticker",    eq.optString("ticker",  "Unknown"));
+                        map.put("name",      eq.optString("name",    "Unknown"));
+                        map.put("sector",    eq.optString("sector",  "Unknown"));
+                        map.put("country",   country);
+                        map.put("region",    region);
+                        // FIX: use marketCap directly from metadata, don't fetch prices
+                        map.put("marketCap", eq.optDouble("marketCap", 0.0));
+
                         results.add(map);
                     }
                 }
@@ -45,29 +73,12 @@ public class PortfolioService {
         } catch (Exception e) {
             e.printStackTrace();
         }
+
         return results;
     }
 
-    // Fetch latest price for a ticker from /api/prices/{symbol}
-    public double getLatestPrice(String ticker) {
-        try {
-            var response = Unirest.get(BASE + "/api/prices/" + ticker).asString();
-            if (response.isSuccess()) {
-                JSONObject body = new JSONObject(response.getBody());
-                JSONArray prices = body.optJSONArray("prices");
-                if (prices != null && !prices.isEmpty()) {
-                    // Last entry is most recent
-                    JSONObject latest = prices.getJSONObject(prices.length() - 1);
-                    return latest.optDouble("price", 0.0);
-                }
-            }
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-        return 0.0;
-    }
 
-    // Fetch all transactions (handles pagination)
+
     public List<Map<String, Object>> getAllTransactions() {
         List<Map<String, Object>> all = new ArrayList<>();
         String url = BASE + "/api/transactions";
@@ -94,9 +105,8 @@ public class PortfolioService {
                     }
                 }
 
-                // Handle pagination
                 JSONObject pagination = body.optJSONObject("pagination");
-                if (pagination != null && pagination.has("nextToken") && !pagination.isNull("nextToken")) {
+                if (pagination != null && !pagination.isNull("nextToken")) {
                     String token = pagination.optString("nextToken", "");
                     url = token.isEmpty() ? null : BASE + "/api/transactions?nextToken=" + token;
                 } else {
@@ -110,7 +120,6 @@ public class PortfolioService {
         return all;
     }
 
-    // Build breakdown (country/region/sector) with 5% "Other" rule
     public List<PortfolioBreakdown> getBreakdown(List<Map<String, Object>> equities, String type) {
         Map<String, Double> groups = new HashMap<>();
         double grandTotal = 0;
@@ -124,9 +133,10 @@ public class PortfolioService {
 
         List<PortfolioBreakdown> results = new ArrayList<>();
         double otherValue = 0;
+        final double total = grandTotal;
 
         for (Map.Entry<String, Double> entry : groups.entrySet()) {
-            double percent = grandTotal > 0 ? (entry.getValue() / grandTotal) * 100 : 0;
+            double percent = total > 0 ? (entry.getValue() / total) * 100 : 0;
             if (percent < 5.0) {
                 otherValue += entry.getValue();
             } else {
@@ -135,14 +145,14 @@ public class PortfolioService {
         }
 
         if (otherValue > 0) {
-            results.add(new PortfolioBreakdown("Other", otherValue, (otherValue / grandTotal) * 100));
+            results.add(new PortfolioBreakdown("Other", otherValue, (otherValue / total) * 100));
         }
 
         results.sort((a, b) -> Double.compare(b.totalValue, a.totalValue));
         return results;
     }
 
-    // Keep for compatibility
+    // Kept for compatibility
     public List<Map<String, Object>> getEquityData(List<String> tickers) {
         return getAllEquities();
     }

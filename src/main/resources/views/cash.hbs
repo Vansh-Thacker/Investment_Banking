@@ -2,86 +2,212 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
+    <title>Scotbank | Portfolio Categorization</title>
     <link rel="stylesheet" href="/assets/style.css">
-    <title>Titan Invest | Terminal</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        body { background-color: #0d1117; color: white; font-family: 'Segoe UI', sans-serif; }
+        .container { max-width: 1200px; margin: 0 auto; padding: 20px; }
+        .card { background-color: #161b22; border: 1px solid #30363d; border-radius: 12px; padding: 30px; box-shadow: 0 8px 24px rgba(0,0,0,0.5); margin-bottom: 20px; }
+        .header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 30px; }
+        .tabs { display: flex; gap: 10px; margin-bottom: 20px; border-bottom: 1px solid #30363d; padding-bottom: 10px; }
+        .tab-btn { background: none; border: none; color: #8b949e; cursor: pointer; font-size: 16px; padding: 10px; }
+        .tab-btn.active { color: #448aff; border-bottom: 2px solid #448aff; }
+        .chart-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+        table { width: 100%; border-collapse: collapse; margin-top: 10px; }
+        th { text-align: left; color: #8b949e; padding: 12px; border-bottom: 1px solid #30363d; }
+        td { padding: 12px; border-bottom: 1px solid #21262d; }
+        tr.hidden { display: none; }
+        .legend { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 16px; }
+        .legend-item { display: flex; align-items: center; gap: 6px; font-size: 13px; cursor: pointer; }
+        .legend-dot { width: 12px; height: 12px; border-radius: 3px; flex-shrink: 0; }
+        .filter-badge { background: #448aff22; border: 1px solid #448aff; color: #448aff; border-radius: 6px; padding: 4px 12px; font-size: 13px; display: none; margin-bottom: 10px; }
+        .nav-bar { display: flex; justify-content: space-between; align-items: center; padding: 14px 20px; background: #161b22; border-bottom: 1px solid #30363d; margin-bottom: 20px; }
+        .nav-bar a { color: #8b949e; text-decoration: none; margin-left: 16px; }
+        .nav-bar a:hover { color: white; }
+    </style>
 </head>
+<body>
 
-<body class="auth-page">
-
-<nav class="top-nav">
-    <a href="/cash/cashsidefrontend">Home</a>
-    <a href="/logout">Logout</a>
-</nav>
-
-<section id="summary" class="auth-form">
-    <h2>Account Summary</h2>
-
-    <p><strong>Cash Balance:</strong> £<span id="cash-balance">{{balance}}</span></p>
-
-    <div class="action-row">
-        <form id="depositForm" action="/cash/deposit" method="get">
-            <input name="amount" id="amount-input" type="number" step="0.01" placeholder="Amount (pounds)" />
-            <button type="submit">Deposit</button>
-        </form>
-
-        <form id="withdrawForm" action="/cash/withdraw" method="get">
-            <input name="amount" id="withdraw-amount-input" type="number" step="0.01" placeholder="Amount (pounds)" />
-            <button type="submit">Withdraw</button>
-        </form>
+<div class="nav-bar">
+    <span style="color:#448aff; font-weight:600;">Scotbank</span>
+    <div>
+        <a href="/cash/cashsidefrontend">Home</a>
+        <a href="/logout">Logout</a>
     </div>
-</section>
+</div>
 
-{{#if error}}
+<div class="container">
+    <div class="header">
+        <h1>Welcome, {{user}}</h1>
+        <div>Total Portfolio: <strong>£{{totalValue}}</strong></div>
+    </div>
+
+    <div class="card">
+        <div class="tabs">
+            <button class="tab-btn active" onclick="showChart('industry', this)">Industry</button>
+            <button class="tab-btn" onclick="showChart('region', this)">Region</button>
+            <button class="tab-btn" onclick="showChart('country', this)">Country</button>
+        </div>
+
+        <div class="chart-grid">
+            <div>
+                <div style="max-width:380px; margin: 0 auto;">
+                    <canvas id="portfolioChart"></canvas>
+                </div>
+                <div class="legend" id="legend"></div>
+            </div>
+
+            <div>
+                <h3 id="table-heading">Holdings Details</h3>
+                <div class="filter-badge" id="filter-badge">
+                    Filtered — click segment again to clear
+                </div>
+                <table>
+                    <thead>
+                    <tr>
+                        <th>Ticker</th>
+                        <th>Name</th>
+                        <th>Sector</th>
+                        <th>Market Cap</th>
+                    </tr>
+                    </thead>
+                    <tbody id="equity-tbody">
+                    {{#each equities}}
+                        <tr data-sector="{{sector}}" data-region="{{region}}" data-country="{{country}}">
+                            <td style="color:#448aff;">{{ticker}}</td>
+                            <td>{{name}}</td>
+                            <td>{{sector}}</td>
+                            <td>£{{marketCap}}</td>
+                        </tr>
+                    {{/each}}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+
 <script>
-    (function(){
-        try {
-            var decoded = decodeURIComponent('{{error}}');
-            if (decoded) {
-                alert(decoded);
-                try {
-                    var url = new URL(window.location.href);
-                    url.searchParams.delete('error');
-                    var clean = url.pathname + (url.searchParams.toString() ? ('?' + url.searchParams.toString()) : '');
-                    history.replaceState(null, '', clean);
-                } catch (ex) { }
+    const COLORS = ['#448aff','#00e676','#ffea00','#ff9100','#f50057','#d500f9','#00bcd4','#ff5722','#8bc34a','#9c27b0'];
+
+    const allData = {
+        industry: {
+            labels:      [{{#each industries}}'{{label}}',{{/each}}],
+            values:      [{{#each industries}}{{totalValue}},{{/each}}],
+            percentages: [{{#each industries}}{{percentage}},{{/each}}],
+            dataKey:     'sector'
+        },
+        region: {
+            labels:      [{{#each regions}}'{{label}}',{{/each}}],
+            values:      [{{#each regions}}{{totalValue}},{{/each}}],
+            percentages: [{{#each regions}}{{percentage}},{{/each}}],
+            dataKey:     'region'
+        },
+        country: {
+            labels:      [{{#each countries}}'{{label}}',{{/each}}],
+            values:      [{{#each countries}}{{totalValue}},{{/each}}],
+            percentages: [{{#each countries}}{{percentage}},{{/each}}],
+            dataKey:     'country'
+        }
+    };
+
+    let currentTab = 'industry';
+    let selectedLabel = null;
+    let myChart = null;
+
+    function buildChart(tab) {
+        const d = allData[tab];
+        const ctx = document.getElementById('portfolioChart').getContext('2d');
+        if (myChart) myChart.destroy();
+
+        myChart = new Chart(ctx, {
+            type: 'doughnut',
+            data: {
+                labels: d.labels,
+                datasets: [{
+                    data: d.values,
+                    backgroundColor: COLORS.slice(0, d.labels.length),
+                    borderWidth: 2,
+                    borderColor: '#161b22',
+                    hoverOffset: 10
+                }]
+            },
+            options: {
+                plugins: {
+                    legend: { display: false },
+                    tooltip: {
+                        callbacks: {
+                            label: function(ctx) {
+                                const pct = d.percentages[ctx.dataIndex].toFixed(1);
+                                const val = ctx.parsed.toLocaleString('en-GB', {minimumFractionDigits: 2, maximumFractionDigits: 2});
+                                return ` ${ctx.label}: £${val} (${pct}%)`;
+                            }
+                        }
+                    }
+                },
+                onClick(evt, elements) {
+                    if (!elements.length) return;
+                    const label = d.labels[elements[0].index];
+                    selectedLabel = selectedLabel === label ? null : label;
+                    filterTable(tab, selectedLabel);
+                    buildLegend(tab);
+                }
             }
-        } catch (e) {
-            try { alert('{{error}}'); } catch (e2) { }
-        }
-    })();
-</script>
-{{/if}}
+        });
 
-<script>
-    document.addEventListener('DOMContentLoaded', function () {
-        const balanceEl = document.getElementById('cash-balance');
-        if (balanceEl) {
-            const raw = balanceEl.textContent && balanceEl.textContent.trim();
-            const pence = parseInt(raw || '0', 10) || 0;
-            balanceEl.textContent = (pence / 100).toFixed(2);
-        }
+        buildLegend(tab);
+    }
 
-        const depositForm = document.getElementById('depositForm');
-        const withdrawForm = document.getElementById('withdrawForm');
+    function buildLegend(tab) {
+        const d = allData[tab];
+        const legend = document.getElementById('legend');
+        legend.innerHTML = '';
+        d.labels.forEach((label, i) => {
+            const pct = d.percentages[i].toFixed(1);
+            const item = document.createElement('div');
+            item.className = 'legend-item';
+            item.style.opacity = (!selectedLabel || selectedLabel === label) ? '1' : '0.4';
+            item.innerHTML = `<div class="legend-dot" style="background:${COLORS[i]}"></div><span>${label} (${pct}%)</span>`;
+            item.onclick = () => {
+                selectedLabel = selectedLabel === label ? null : label;
+                filterTable(tab, selectedLabel);
+                buildLegend(tab);
+            };
+            legend.appendChild(item);
+        });
+    }
 
-        if (depositForm) {
-            depositForm.addEventListener('submit', function (e) {
-                const input = document.getElementById('amount-input');
-                const val = parseFloat(input.value);
-                if (isNaN(val) || val <= 0) { e.preventDefault(); alert('Enter positive amount'); return; }
-                input.value = Math.round(val * 100);
-            });
-        }
+    function filterTable(tab, label) {
+        const dataKey = allData[tab].dataKey;
+        const rows = document.querySelectorAll('#equity-tbody tr');
+        const badge = document.getElementById('filter-badge');
+        const heading = document.getElementById('table-heading');
 
-        if (withdrawForm) {
-            withdrawForm.addEventListener('submit', function (e) {
-                const input = document.getElementById('withdraw-amount-input');
-                const val = parseFloat(input.value);
-                if (isNaN(val) || val <= 0) { e.preventDefault(); alert('Enter positive amount'); return; }
-                input.value = Math.round(val * 100);
-            });
-        }
-    });
+        rows.forEach(row => {
+            if (!label) {
+                row.classList.remove('hidden');
+            } else {
+                const val = row.getAttribute('data-' + dataKey);
+                val === label ? row.classList.remove('hidden') : row.classList.add('hidden');
+            }
+        });
+
+        badge.style.display = label ? 'block' : 'none';
+        heading.textContent = label ? 'Showing: ' + label : 'Holdings Details';
+    }
+
+    function showChart(tab, btn) {
+        currentTab = tab;
+        selectedLabel = null;
+        document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+        filterTable(tab, null);
+        buildChart(tab);
+    }
+
+    // Init
+    buildChart('industry');
 </script>
 
 </body>

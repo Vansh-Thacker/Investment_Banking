@@ -35,12 +35,12 @@ public class RegionMapper {
             case "kenya":
             case "uganda":
             case "egypt":
-                return "africa";
+                return "Africa";
 
             case "uae":
             case "united arab emirates":
             case "iran":
-                return "Midle East";
+                return "Middle East";
 
             default:
                 return "Unknown";

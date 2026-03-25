@@ -1,7 +1,6 @@
 package uk.co.asepstrath.bank.portfolio;
 
 import io.jooby.Context;
-import io.jooby.Jooby;
 import io.jooby.ModelAndView;
 import io.jooby.annotation.*;
 import org.slf4j.Logger;
@@ -14,18 +13,32 @@ public class PortfolioController {
 
     public PortfolioController(Logger log) {
         this.logger = log;
-        // Maintaining your existing constructor style
         this.service = new PortfolioService("uk", "Europe", "Finance");
     }
 
     @GET
     public ModelAndView dashboard(Context ctx) {
         String user = "Test user";
+        /*
+        String user = ctx.session().get("user").value((String) null);
+        if (user == null) {
+            ctx.sendRedirect("/login");
+            return null;
+        }
 
-        // Fetch all equities with prices
+         */
+
+
+        // Fetch all equities (includes country/region/sector from metadata API)
         List<Map<String, Object>> equities = service.getAllEquities();
 
-        // Calculate grand total
+        // Log to verify country/region are populated
+        for (Map<String, Object> eq : equities) {
+            logger.info("Equity: {} country={} region={} sector={}",
+                    eq.get("ticker"), eq.get("country"), eq.get("region"), eq.get("sector"));
+        }
+
+        // Calculate grand total from marketCap
         double grandTotal = 0;
         for (Map<String, Object> eq : equities) {
             try {
@@ -33,8 +46,7 @@ public class PortfolioController {
             } catch (NumberFormatException ignored) {}
         }
 
-        // Breakdowns — sector works, country/region will show "Unknown"
-        // since the API doesn't provide that data
+        // Build breakdowns for all three tabs
         List<PortfolioBreakdown> countryData  = service.getBreakdown(equities, "country");
         List<PortfolioBreakdown> regionData   = service.getBreakdown(equities, "region");
         List<PortfolioBreakdown> industryData = service.getBreakdown(equities, "sector");
@@ -47,38 +59,21 @@ public class PortfolioController {
         model.put("regions",    regionData);
         model.put("industries", industryData);
 
-        return new ModelAndView("dashboard.hbs", model);
+        // FIX 1: correct template path, no .hbs extension
+        return new ModelAndView("dashboard", model);
     }
-    /**
-     * Logic to group equities and apply Emma's "Under 5% = Other" rule
-     */
-    private List<PortfolioBreakdown> getGroupedBreakdown(List<Map<String, Object>> equities, String categoryType, double grandTotal) {
-        Map<String, Double> totals = new HashMap<>();
 
-        for (Map<String, Object> eq : equities) {
-            String key = (String) eq.getOrDefault(categoryType, "Unknown");
-            double value = Double.parseDouble(eq.getOrDefault("marketCap", 0).toString());
-            totals.put(key, totals.getOrDefault(key, 0.0) + value);
+    @GET
+    @Path("/debug")
+    public String debug(Context ctx) {
+        try {
+            var r1 = kong.unirest.core.Unirest.get("https://api.asep-strath.co.uk/api/equities").asString();
+            var r2 = kong.unirest.core.Unirest.get("https://api.asep-strath.co.uk/api/equities/metadata")
+                    .queryString("tickers", "CTT,STD,CLP,OLC,APX").asString();
+            return "STATUS1: " + r1.getStatus() + "\nBODY1: " + r1.getBody()
+                    + "\n\nSTATUS2: " + r2.getStatus() + "\nBODY2: " + r2.getBody();
+        } catch (Exception e) {
+            return "ERROR: " + e.getMessage();
         }
-
-        List<PortfolioBreakdown> results = new ArrayList<>();
-        double otherValue = 0;
-
-        for (Map.Entry<String, Double> entry : totals.entrySet()) {
-            double percent = (entry.getValue() / grandTotal) * 100;
-
-            if (percent < 5.0) {
-                otherValue += entry.getValue();
-            } else {
-                // Assuming PortfolioBreakdown has a constructor (label, value, percent)
-                results.add(new PortfolioBreakdown(entry.getKey(), entry.getValue(), percent));
-            }
-        }
-
-        if (otherValue > 0) {
-            results.add(new PortfolioBreakdown("Other", otherValue, (otherValue / grandTotal) * 100));
-        }
-
-        return results;
     }
 }
