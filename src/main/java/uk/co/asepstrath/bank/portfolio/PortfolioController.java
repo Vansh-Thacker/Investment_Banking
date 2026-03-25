@@ -20,49 +20,35 @@ public class PortfolioController {
 
     @GET
     public ModelAndView dashboard(Context ctx) {
-        // 1. Session Check
-        //String user = ctx.session().get("user").value((String) null);
         String user = "Test user";
-        /*if (user == null) {
-            ctx.sendRedirect("/login");
-            return null;
-        }
 
-         */
+        // Fetch all equities with prices
+        List<Map<String, Object>> equities = service.getAllEquities();
 
-        // 2. Fetch Data (Sarah's Requirement: Current Market Value)
-        List<String> tickers = List.of("hsba", "bp", "ulvr", "tsco", "nvda");
-        List<Map<String, Object>> equities = service.getEquityData(tickers);
-
-        // 3. Calculate Grand Total for the Summary
+        // Calculate grand total
         double grandTotal = 0;
-
         for (Map<String, Object> eq : equities) {
-            Object cap = eq.get("marketCap");
-            if (cap instanceof Number) {
-                grandTotal += ((Number) cap).doubleValue();
-            }
+            try {
+                grandTotal += Double.parseDouble(eq.getOrDefault("marketCap", 0).toString());
+            } catch (NumberFormatException ignored) {}
         }
 
-        // 4. Generate Groupings (Country, Region, Industry) with Emma's 5% Rule
-        List<PortfolioBreakdown> countryData = getGroupedBreakdown(equities, "country", grandTotal);
-        List<PortfolioBreakdown> regionData = getGroupedBreakdown(equities, "region", grandTotal);
-        List<PortfolioBreakdown> industryData = getGroupedBreakdown(equities, "sector", grandTotal);
+        // Breakdowns — sector works, country/region will show "Unknown"
+        // since the API doesn't provide that data
+        List<PortfolioBreakdown> countryData  = service.getBreakdown(equities, "country");
+        List<PortfolioBreakdown> regionData   = service.getBreakdown(equities, "region");
+        List<PortfolioBreakdown> industryData = service.getBreakdown(equities, "sector");
 
-        // 5. Build the Model for Handlebars
         Map<String, Object> model = new HashMap<>();
-        model.put("user", user); // Using 'user' as requested
-        model.put("equities", equities);
-        model.put("totalValue", grandTotal);
-
-        // These keys allow the .hbs to render 3 separate charts
-        model.put("countries", countryData);
-        model.put("regions", regionData);
+        model.put("user",       user);
+        model.put("equities",   equities);
+        model.put("totalValue", String.format("%.2f", grandTotal));
+        model.put("countries",  countryData);
+        model.put("regions",    regionData);
         model.put("industries", industryData);
 
         return new ModelAndView("dashboard.hbs", model);
     }
-
     /**
      * Logic to group equities and apply Emma's "Under 5% = Other" rule
      */
