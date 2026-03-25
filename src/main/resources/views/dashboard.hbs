@@ -2,34 +2,44 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>Scotbank | Portfolio Categorization</title>
-    <link rel="stylesheet" href="/assets/style.css"> <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <title>Scotbank | Portfolio</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <style>
-        body { background-color: #0d1117; color: white; font-family: 'Segoe UI', sans-serif; }
-        .container { max-width: 1200px; margin: 0 auto; padding: 20px; }
+        body { background-color: #0d1117; color: white; font-family: 'Segoe UI', sans-serif; margin: 0; }
+        .container { max-width: 1200px; margin: 0 auto; padding: 40px 20px; }
+        .header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 30px; }
 
-        /* The Card Style from your Login Page */
         .card {
             background-color: #161b22;
             border: 1px solid #30363d;
             border-radius: 12px;
             padding: 30px;
             box-shadow: 0 8px 24px rgba(0,0,0,0.5);
-            margin-bottom: 20px;
         }
 
-        .header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 30px; }
-        .blue-btn { background-color: #448aff; color: white; border: none; padding: 10px 20px; border-radius: 6px; cursor: pointer; }
+        .tabs { display: flex; gap: 20px; margin-bottom: 30px; border-bottom: 1px solid #30363d; }
+        .tab-btn {
+            background: none; border: none; color: #8b949e; padding: 12px 5px;
+            cursor: pointer; font-size: 16px; font-weight: 600; transition: 0.2s;
+            border-bottom: 2px solid transparent;
+        }
+        .tab-btn:hover { color: white; }
+        .tab-btn.active { color: #448aff; border-bottom-color: #448aff; }
 
-        /* Tab Navigation */
-        .tabs { display: flex; gap: 10px; margin-bottom: 20px; border-bottom: 1px solid #30363d; padding-bottom: 10px; }
-        .tab-btn { background: none; border: none; color: #8b949e; cursor: pointer; font-size: 16px; padding: 10px; }
-        .tab-btn.active { color: #448aff; border-bottom: 2px solid #448aff; }
+        .chart-grid { display: grid; grid-template-columns: 450px 1fr; gap: 40px; align-items: start; }
 
-        .chart-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
-        table { width: 100%; border-collapse: collapse; margin-top: 20px; }
-        th { text-align: left; color: #8b949e; padding: 12px; border-bottom: 1px solid #30363d; }
-        td { padding: 12px; border-bottom: 1px solid #21262d; }
+        .chart-container {
+            position: relative;
+            height: 400px;
+            width: 100%;
+        }
+
+        table { width: 100%; border-collapse: collapse; }
+        th { text-align: left; color: #8b949e; padding: 12px; border-bottom: 1px solid #30363d; font-size: 14px; }
+        td { padding: 16px 12px; border-bottom: 1px solid #21262d; font-size: 15px; }
+        .ticker { color: #448aff; font-weight: bold; }
+        .total-value { font-size: 20px; }
+        .total-value strong { color: #448aff; font-size: 24px; }
     </style>
 </head>
 <body>
@@ -42,18 +52,18 @@
 
     <div class="card">
         <div class="tabs">
-            <button class="tab-btn active" onclick="showChart('industry')">Industry</button>
-            <button class="tab-btn" onclick="showChart('region')">Region</button>
-            <button class="tab-btn" onclick="showChart('country')">Country</button>
+            <button class="tab-btn active" onclick="updateUI('industry', event)">Industry</button>
+            <button class="tab-btn" onclick="updateUI('region', event)">Region</button>
+            <button class="tab-btn" onclick="updateUI('country', event)">Country</button>
         </div>
 
         <div class="chart-grid">
-            <div style="max-width: 400px;">
+            <div class="chart-container">
                 <canvas id="portfolioChart"></canvas>
             </div>
 
-            <div>
-                <h3>Holdings Details</h3>
+            <div class="table-container">
+                <h3 id="tableTitle">Portfolio Holdings</h3>
                 <table>
                     <thead>
                     <tr>
@@ -66,7 +76,7 @@
                     <tbody>
                     {{#each equities}}
                         <tr>
-                            <td style="color: #448aff;">{{ticker}}</td>
+                            <td class="ticker">{{ticker}}</td>
                             <td>{{name}}</td>
                             <td>{{sector}}</td>
                             <td>£{{marketCap}}</td>
@@ -80,38 +90,62 @@
 </div>
 
 <script>
-    // Data passed from your Java Controller
-    const industryData = {
-        labels: [{{#each industries}}'{{label}}',{{/each}}],
-        values: [{{#each industries}}{{totalValue}},{{/each}}]
-    };
-
-    const regionData = {
-        labels: [{{#each regions}}'{{label}}',{{/each}}],
-        values: [{{#each regions}}{{totalValue}},{{/each}}]
+    // These objects map to the keys you put in your controller's model
+    const dataSources = {
+        industry: {
+            labels: [{{#each industries}}'{{label}}',{{/each}}],
+            values: [{{#each industries}}{{totalValue}},{{/each}}]
+        },
+        region: {
+            labels: [{{#each regions}}'{{label}}',{{/each}}],
+            values: [{{#each regions}}{{totalValue}},{{/each}}]
+        },
+        country: {
+            labels: [{{#each countries}}'{{label}}',{{/each}}],
+            values: [{{#each countries}}{{totalValue}},{{/each}}]
+        }
     };
 
     const ctx = document.getElementById('portfolioChart').getContext('2d');
+
+    // Default to 'industry' on load
     let myChart = new Chart(ctx, {
         type: 'doughnut',
         data: {
-            labels: industryData.labels,
+            labels: dataSources.industry.labels,
             datasets: [{
-                data: industryData.values,
+                data: dataSources.industry.values,
                 backgroundColor: ['#448aff', '#00e676', '#ffea00', '#ff9100', '#f50057', '#d500f9', '#30363d'],
-                borderWidth: 0
+                borderWidth: 0,
+                hoverOffset: 15
             }]
         },
         options: {
+            responsive: true,
+            maintainAspectRatio: false,
             plugins: {
-                legend: { position: 'bottom', labels: { color: 'white' } }
+                legend: {
+                    position: 'bottom',
+                    labels: { color: '#8b949e', padding: 20, font: { size: 12 } }
+                }
             }
         }
     });
 
-    function showChart(type) {
-        // Logic to update chart labels/data based on tab click
-        // To keep it simple for your 3hr deadline, focus on the default Industry view first!
+    function updateUI(type, event) {
+        // Toggle Active Class
+        document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+        event.target.classList.add('active');
+
+        // Update Chart Data using the key provided (industry, region, or country)
+        const selected = dataSources[type];
+        if (selected && selected.labels.length > 0) {
+            myChart.data.labels = selected.labels;
+            myChart.data.datasets[0].data = selected.values;
+            myChart.update();
+        }
+
+        document.getElementById('tableTitle').innerText = 'Portfolio Holdings by ' + type.charAt(0).toUpperCase() + type.slice(1);
     }
 </script>
 

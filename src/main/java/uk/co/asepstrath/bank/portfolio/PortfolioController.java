@@ -60,7 +60,7 @@ public class PortfolioController {
         model.put("industries", industryData);
 
         // FIX 1: correct template path, no .hbs extension
-        return new ModelAndView("dashboard", model);
+        return new ModelAndView("dashboard.hbs", model);
     }
 
     @GET
