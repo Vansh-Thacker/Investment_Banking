@@ -4,6 +4,7 @@ import io.jooby.Cookie;
 import io.jooby.ServerOptions;
 import io.jooby.SessionStore;
 import io.jooby.netty.NettyServer;
+import uk.co.asepstrath.bank.capitalgains.CapitalGainsController;
 import uk.co.asepstrath.bank.cash.CashController;
 import uk.co.asepstrath.bank.Account;
 import uk.co.asepstrath.bank.cash.CashController_;
@@ -54,7 +55,6 @@ public class App extends Jooby {
         Logger log = getLog();
 
         Account account = new Account();
-        InvestmentService investmentService = new InvestmentService(account);
 
 
         // --- Current prices (single source of truth) ---
@@ -63,7 +63,6 @@ public class App extends Jooby {
 
         // --- UserService now needs CurrentPriceService ---
         UserService users = new UserService(currentPriceService);
-
         // --- Cash controller ---
         CashController cash = new CashController(log, account);
         cash.setUserService(users);
@@ -93,9 +92,10 @@ public class App extends Jooby {
         if (asepBaseUrl == null || asepBaseUrl.isBlank()) {
             asepBaseUrl = getConfig().getString("asep.baseUrl");
         }
-        //mvc(new InvestmentController_(ds, log, account, priceService, equitiesService));
-        mvc(new InvestmentController_(ds, log, account, priceService, equitiesService, investmentService));
-        mvc(new CapitalGainsController_(log, investmentService));
+
+        CapitalGainsController cg = new CapitalGainsController(log, users);
+        mvc(new CapitalGainsController_(cg));
+
 
 
         /*

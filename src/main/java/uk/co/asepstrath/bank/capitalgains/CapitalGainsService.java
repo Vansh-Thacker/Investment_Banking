@@ -1,140 +1,298 @@
 package uk.co.asepstrath.bank.capitalgains;
 
-import uk.co.asepstrath.bank.investments.InvestmentService;
 import uk.co.asepstrath.bank.investments.InvestmentTransaction;
+import uk.co.asepstrath.bank.investments.InvestmentService;
 
+import java.io.BufferedReader;
+import java.io.FileReader;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.*;
-import java.util.stream.Collectors;
+
+import java.util.*;
 
 public class CapitalGainsService {
 
-    private static final double ALLOWANCE = 3000.0;
-    private static final double TAX_RATE = 0.24;
-
     private final InvestmentService investmentService;
+
+    // Reconstructed transactions
+    private final List<InvestmentTransaction> transactions = new ArrayList<>();
+
+    // Price history: ticker → timestamp → price
+    private final Map<String, TreeMap<LocalDateTime, Double>> priceHistory = new HashMap<>();
+
+    // Fractional holdings + cost basis tracking (internal only)
+    private final Map<String, Double> holdings = new HashMap<>();
+    private final Map<String, Double> costBasis = new HashMap<>();
+
+    private static final double ANNUAL_ALLOWANCE = 3000.0;
+    private static final double TAX_RATE = 0.20;
 
     public CapitalGainsService(InvestmentService investmentService) {
         this.investmentService = investmentService;
     }
 
-    /** All SELL transactions from investment history. */
-    public List<InvestmentTransaction> getAllSellTransactions() {
-        return investmentService.getHistory().stream()
-                .filter(tx -> "SELL".equalsIgnoreCase(tx.type))
-                .collect(Collectors.toList());
-    }
+    /* ============================================================
+       PRICE CSV LOADING
+       ============================================================ */
+    public void loadPricesCsv(String path) {
+        System.out.println("=== LOADING PRICES CSV: " + path + " ===");
 
-    /** Determine UK tax year info for a given timestamp. */
-    public TaxYearInfo getTaxYear(LocalDateTime timestamp) {
-        LocalDate date = timestamp.toLocalDate();
-        int year = date.getYear();
-        LocalDate taxYearStart = LocalDate.of(year, 4, 6); // 6 April year
+        try (BufferedReader br = new BufferedReader(new FileReader(path))) {
+            String line;
+            boolean first = true;
 
-        int startYear;
-        if (date.isBefore(taxYearStart)) {
-            startYear = year - 1;
-        } else {
-            startYear = year;
+            while ((line = br.readLine()) != null) {
+                if (first) { first = false; continue; }
+
+                System.out.println("PRICE ROW: " + line);
+
+                String[] p = line.split(",");
+                String ticker = p[0];
+                String rawTs = p[1];
+                double price = Double.parseDouble(p[2]);
+
+                LocalDateTime ts;
+                if (rawTs.length() == 10) {
+                    ts = LocalDate.parse(rawTs).atStartOfDay();
+                } else {
+                    ts = LocalDateTime.parse(rawTs);
+                }
+
+                priceHistory
+                        .computeIfAbsent(ticker, k -> new TreeMap<>())
+                        .put(ts, price);
+
+                System.out.println("→ PRICE LOADED: " + ticker + " @ " + ts + " = " + price);
+            }
+
+        } catch (Exception e) {
+            System.out.println("ERROR LOADING PRICES CSV");
+            e.printStackTrace();
         }
 
-        TaxYearInfo info = new TaxYearInfo();
-        info.startYear = startYear;
-        info.startDate = LocalDate.of(startYear, 4, 6);
-        info.endDate = LocalDate.of(startYear + 1, 4, 5);
-        info.label = startYear + "/" + String.valueOf((startYear + 1) % 100);
-        return info;
+        System.out.println("=== FINISHED LOADING PRICES ===");
     }
 
-    /** All distinct tax years (startYear) present in SELL history. */
+    private double lookupPrice(String ticker, LocalDateTime ts) {
+        System.out.println("LOOKUP PRICE FOR " + ticker + " @ " + ts);
+
+        TreeMap<LocalDateTime, Double> map = priceHistory.get(ticker);
+        if (map == null || map.isEmpty()) {
+            System.out.println("→ NO PRICE HISTORY FOR " + ticker);
+            return 0;
+        }
+
+        Map.Entry<LocalDateTime, Double> entry = map.floorEntry(ts);
+        if (entry != null) {
+            System.out.println("→ USING FLOOR PRICE: " + entry.getValue());
+            return entry.getValue();
+        }
+
+        double fallback = map.firstEntry().getValue();
+        System.out.println("→ USING EARLIEST PRICE: " + fallback);
+        return fallback;
+    }
+
+    /* ============================================================
+       HISTORY CSV LOADING (fractional shares)
+       ============================================================ */
+    public void loadHistoryCsv(String path) {
+        System.out.println("=== LOADING HISTORY CSV: " + path + " ===");
+
+        try (BufferedReader br = new BufferedReader(new FileReader(path))) {
+            String line;
+            boolean first = true;
+
+            while ((line = br.readLine()) != null) {
+                if (first) { first = false; continue; }
+
+                System.out.println("HISTORY ROW: " + line);
+
+                String[] p = line.split(",");
+                LocalDateTime ts = LocalDateTime.parse(p[0]);
+                String type = p[1];
+                String ticker = p[2];
+                long amountPence = Long.parseLong(p[3]);
+                double amount = amountPence / 100.0;
+
+                if (!type.equals("BUY") && !type.equals("SELL")) {
+                    System.out.println("→ SKIPPED (not BUY/SELL)");
+                    continue;
+                }
+
+                double price = lookupPrice(ticker, ts);
+                if (price <= 0) {
+                    System.out.println("→ SKIPPED (no price found)");
+                    continue;
+                }
+
+                // FRACTIONAL SHARES
+                double shares = amount / price;
+                int roundedShares = (int) Math.round(shares);
+
+                System.out.println("→ FRACTIONAL SHARES: " + shares + " (rounded=" + roundedShares + ")");
+
+                InvestmentTransaction tx = new InvestmentTransaction();
+                tx.timestamp = ts;
+                tx.type = type;
+                tx.ticker = ticker;
+                tx.price = price;
+                tx.shares = roundedShares; // keep Investment UI happy
+
+                if (type.equals("BUY")) {
+                    holdings.put(ticker, holdings.getOrDefault(ticker, 0.0) + shares);
+                    costBasis.put(ticker, costBasis.getOrDefault(ticker, 0.0) + amount);
+
+                    tx.sharesAfter = (int) Math.round(holdings.get(ticker));
+                    System.out.println("→ BUY APPLIED: now holding " + holdings.get(ticker));
+                }
+
+                if (type.equals("SELL")) {
+                    double prevShares = holdings.getOrDefault(ticker, 0.0);
+                    double prevCost = costBasis.getOrDefault(ticker, 0.0);
+
+                    if (prevShares <= 0) {
+                        System.out.println("→ SKIPPED SELL (no shares)");
+                        continue;
+                    }
+
+                    double proportion = shares / prevShares;
+                    double costRemoved = prevCost * proportion;
+
+                    double proceeds = amount;
+                    double gain = proceeds - costRemoved;
+
+                    holdings.put(ticker, prevShares - shares);
+                    costBasis.put(ticker, prevCost - costRemoved);
+
+                    tx.proceeds = proceeds;
+                    tx.realizedGainLoss = gain;
+                    tx.sharesAfter = (int) Math.round(holdings.get(ticker));
+
+                    System.out.println("→ SELL APPLIED: gain=" + gain);
+                }
+
+                transactions.add(tx);
+                System.out.println("→ TX ADDED");
+            }
+
+        } catch (Exception e) {
+            System.out.println("ERROR LOADING HISTORY CSV");
+            e.printStackTrace();
+        }
+
+        System.out.println("=== FINISHED LOADING HISTORY ===");
+        System.out.println("TOTAL TX LOADED: " + transactions.size());
+    }
+
+    /* ============================================================
+       TAX YEAR HELPERS
+       ============================================================ */
     public List<TaxYearInfo> getAvailableTaxYears() {
-        Map<Integer, TaxYearInfo> byYear = new HashMap<>();
-        for (InvestmentTransaction tx : getAllSellTransactions()) {
-            if (tx.timestamp == null) {
-                continue;
-            }
-            TaxYearInfo info = getTaxYear(tx.timestamp);
-            byYear.putIfAbsent(info.startYear, info);
+        System.out.println("=== COMPUTING AVAILABLE TAX YEARS ===");
+
+        Set<Integer> years = new HashSet<>();
+
+        for (InvestmentTransaction tx : transactions) {
+            if (!"SELL".equals(tx.type)) continue;
+            int y = TaxYearInfo.getTaxYearStart(tx.timestamp);
+            years.add(y);
+            System.out.println("→ SELL FOUND IN YEAR " + y);
         }
-        return byYear.values().stream()
-                .sorted(Comparator.comparingInt(t -> t.startYear))
-                .collect(Collectors.toList());
+
+        if (years.isEmpty()) {
+            int fallback = TaxYearInfo.getCurrentTaxYearStart();
+            years.add(fallback);
+            System.out.println("→ NO SELL YEARS, USING CURRENT YEAR " + fallback);
+        }
+
+        List<Integer> sorted = new ArrayList<>(years);
+        sorted.sort(Collections.reverseOrder());
+
+        List<TaxYearInfo> list = new ArrayList<>();
+        for (int y : sorted) list.add(new TaxYearInfo(y));
+
+        System.out.println("YEARS: " + sorted);
+        return list;
     }
 
-    /** SELL transactions for a given tax year start (e.g. 2024 for 2024/25). */
-    public List<InvestmentTransaction> getTransactionsForYear(int taxYearStart) {
-        TaxYearInfo info = buildTaxYearInfo(taxYearStart);
-        return getAllSellTransactions().stream()
-                .filter(tx -> tx.timestamp != null)
-                .filter(tx -> {
-                    LocalDate d = tx.timestamp.toLocalDate();
-                    return !d.isBefore(info.startDate) && !d.isAfter(info.endDate);
-                })
-                .sorted(Comparator.comparing(t -> t.timestamp))
-                .collect(Collectors.toList());
+    public TaxYearInfo resolveYear(Integer year) {
+        List<TaxYearInfo> years = getAvailableTaxYears();
+
+        if (year == null) {
+            return years.get(0); // latest year with SELLs
+        }
+
+        return new TaxYearInfo(year);
     }
 
-    /** Summary for a given tax year start (e.g. 2024 for 2024/25). */
-    public CapitalGainsSummary getSummaryForYear(int taxYearStart) {
-        TaxYearInfo info = buildTaxYearInfo(taxYearStart);
-        List<InvestmentTransaction> txs = getTransactionsForYear(taxYearStart);
+    /* ============================================================
+       REALISED TRANSACTIONS
+       ============================================================ */
+    public List<InvestmentTransaction> getRealisedTransactionsForYear(int startYear) {
+        List<InvestmentTransaction> list = new ArrayList<>();
 
-        double totalGains = 0.0;
-        double totalLosses = 0.0;
-
-        for (InvestmentTransaction tx : txs) {
-            double gain = tx.realizedGainLoss != null ? tx.realizedGainLoss : 0.0;
-            if (gain > 0) {
-                totalGains += gain;
-            } else if (gain < 0) {
-                totalLosses += gain;
+        for (InvestmentTransaction tx : transactions) {
+            if (!"SELL".equals(tx.type)) continue;
+            if (TaxYearInfo.getTaxYearStart(tx.timestamp) == startYear) {
+                list.add(tx);
             }
         }
 
-        double netGain = totalGains + totalLosses;
-        double allowanceUsed = Math.max(0.0, Math.min(ALLOWANCE, netGain));
-        double allowanceRemaining = ALLOWANCE - allowanceUsed;
-        if (allowanceRemaining < 0) {
-            allowanceRemaining = 0;
+        return list;
+    }
+
+    /* ============================================================
+       SUMMARY
+       ============================================================ */
+    public CapitalGainsSummary getSummaryForYear(int startYear) {
+        System.out.println("=== COMPUTING SUMMARY FOR YEAR " + startYear + " ===");
+
+        double totalGains = 0;
+        double totalLosses = 0;
+
+        for (InvestmentTransaction tx : transactions) {
+            if (!"SELL".equals(tx.type)) continue;
+            if (TaxYearInfo.getTaxYearStart(tx.timestamp) != startYear) continue;
+
+            System.out.println("→ SELL TX: gain=" + tx.realizedGainLoss);
+
+            if (tx.realizedGainLoss != null) {
+                if (tx.realizedGainLoss >= 0) {
+                    totalGains += tx.realizedGainLoss;
+                } else {
+                    totalLosses += Math.abs(tx.realizedGainLoss);
+                }
+            }
         }
 
-        double taxableGain = Math.max(0.0, netGain - ALLOWANCE);
+        double netGain = totalGains - totalLosses;
+
+        double allowanceUsed = Math.min(ANNUAL_ALLOWANCE, Math.max(0, netGain));
+        double allowanceRemaining = ANNUAL_ALLOWANCE - allowanceUsed;
+
+        double taxableGain = Math.max(0, netGain - ANNUAL_ALLOWANCE);
         double taxOwed = taxableGain * TAX_RATE;
 
-        CapitalGainsSummary summary = new CapitalGainsSummary();
-        summary.taxYearStart = info.startYear;
-        summary.taxYearLabel = info.label;
+        System.out.println("SUMMARY:");
+        System.out.println("  totalGains=" + totalGains);
+        System.out.println("  totalLosses=" + totalLosses);
+        System.out.println("  netGain=" + netGain);
+        System.out.println("  taxableGain=" + taxableGain);
+        System.out.println("  taxOwed=" + taxOwed);
 
-        summary.totalGains = totalGains;
-        summary.totalLosses = totalLosses;
-        summary.netGain = netGain;
-
-        summary.allowance = ALLOWANCE;
-        summary.allowanceUsed = allowanceUsed;
-        summary.allowanceRemaining = allowanceRemaining;
-
-        summary.taxableGain = taxableGain;
-        summary.taxRate = TAX_RATE;
-        summary.taxOwed = taxOwed;
-
-        summary.transactions = txs;
-        return summary;
-    }
-
-    /** Helper to build TaxYearInfo from a start year without needing a timestamp. */
-    private TaxYearInfo buildTaxYearInfo(int startYear) {
-        TaxYearInfo info = new TaxYearInfo();
-        info.startYear = startYear;
-        info.startDate = LocalDate.of(startYear, 4, 6);
-        info.endDate = LocalDate.of(startYear + 1, 4, 5);
-        info.label = startYear + "/" + String.valueOf((startYear + 1) % 100);
-        return info;
-    }
-
-    /** Current tax year based on today's date. */
-    public TaxYearInfo getCurrentTaxYear() {
-        return getTaxYear(LocalDateTime.now());
+        return new CapitalGainsSummary(
+                totalGains,
+                totalLosses,
+                netGain,
+                allowanceUsed,
+                allowanceRemaining,
+                taxableGain,
+                TAX_RATE,
+                taxOwed
+        );
     }
 }
+
 

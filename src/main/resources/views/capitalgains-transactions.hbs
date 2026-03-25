@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <link rel="stylesheet" href="/assets/investments.css">
+    <title>Realised Transactions | Titan Invest</title>
+</head>
+
+<body class="invest-page">
+
+<nav class="top-nav">
+    <a href="/cash/cashsidefrontend">Cash Dashboard</a>
+    <a href="/investments">Investments</a>
+    <a href="/capitalgains/summary">Capital Gains</a>
+    <a href="/logout">Logout</a>
+</nav>
+
+<section class="invest-container">
+    <h2>Realised Transactions for {{selectedYear.label}}</h2>
+
+    {{#if transactions.length}}
+    <table class="portfolio-table">
+        <thead>
+            <tr>
+                <th>Date</th>
+                <th>Ticker</th>
+                <th>Shares</th>
+                <th>Sale Price (£)</th>
+                <th>Proceeds (£)</th>
+                <th>Realised Gain/Loss (£)</th>
+            </tr>
+        </thead>
+
+        <tbody>
+        {{#each transactions}}
+            <tr>
+                <td>{{timestamp}}</td>
+                <td>{{ticker}}</td>
+                <td>{{shares}}</td>
+                <td class="gbp">{{price}}</td>
+                <td class="gbp">{{proceeds}}</td>
+                <td class="pnl">{{realizedGainLoss}}</td>
+            </tr>
+        {{/each}}
+        </tbody>
+    </table>
+
+    {{else}}
+        <p style="text-align:center; color: var(--text-secondary); margin-top: 20px;">
+            No realised transactions for this tax year.
+        </p>
+    {{/if}}
+
+    <div class="action-row" style="margin-top: 25px;">
+        <a class="btn" href="/capitalgains/summary?year={{selectedYear.startYear}}">
+            Back to Summary
+        </a>
+    </div>
+</section>
+
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+
+    // Format GBP cells
+    document.querySelectorAll('.gbp').forEach(cell => {
+        const raw = parseFloat(cell.textContent || "0");
+        if (!isNaN(raw)) {
+            cell.textContent = raw.toFixed(2);
+        }
+    });
+
+    // Colour P/L cells
+    document.querySelectorAll('.pnl').forEach(cell => {
+        const val = parseFloat(cell.textContent);
+        if (isNaN(val)) return;
+
+        if (val > 0) cell.style.color = "#22c55e";
+        else if (val < 0) cell.style.color = "#ef4444";
+        else cell.style.color = "#94a3b8";
+
+        cell.textContent = val.toFixed(2);
+    });
+
+});
+</script>
+
+</body>
+</html>
+

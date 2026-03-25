@@ -1,89 +1,146 @@
 package uk.co.asepstrath.bank.capitalgains;
 
 import io.jooby.Context;
+import io.jooby.Context;
 import io.jooby.ModelAndView;
 import io.jooby.annotation.*;
-import org.slf4j.Logger;
+import io.jooby.TemplateEngine;
+
+import uk.co.asepstrath.bank.investments.InvestmentTransaction;
+import uk.co.asepstrath.bank.user.User;
+import uk.co.asepstrath.bank.user.UserService;
 import uk.co.asepstrath.bank.investments.InvestmentService;
 
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import org.slf4j.Logger;
+
 
 @Path("/capitalgains")
 public class CapitalGainsController {
 
-    private final CapitalGainsService service;
     private final Logger log;
+    private final UserService userService;
 
-    public CapitalGainsController(Logger log, InvestmentService investmentService) {
+    public CapitalGainsController(Logger log, UserService userService) {
         this.log = log;
-        this.service = new CapitalGainsService(investmentService);
+        this.userService = userService;
     }
 
-    /** For tests: inject custom CapitalGainsService. */
-    CapitalGainsController(Logger log, CapitalGainsService service) {
-        this.log = log;
-        this.service = service;
-    }
-
+    /* ============================================================
+       SUMMARY PAGE
+       ============================================================ */
     @GET
-    public void index(Context ctx) {
-        ctx.sendRedirect("/capitalgains/summary");
-    }
+    @Path("/summary")
+    public Object summary(Context ctx) {
 
-    /** HTML summary view: current or selected tax year. */
-    @GET("/summary")
-    public ModelAndView summary(@QueryParam Integer year, Context ctx) {
-        // Determine tax year start
-        int taxYearStart;
-        if (year != null) {
-            taxYearStart = year;
+        // --- FIXED SESSION HANDLING ---
+        var userIdValue = ctx.session().get("userId");
+        if (userIdValue == null || userIdValue.value() == null) {
+            return ctx.sendRedirect("/login");
+        }
+        String userId = userIdValue.value();
+
+        User user = userService.findById(userId);
+        InvestmentService invService = user.getInvestmentService();
+
+        CapitalGainsService cgService = new CapitalGainsService(invService);
+
+        cgService.loadPricesCsv("prices.csv");
+        cgService.loadHistoryCsv("UserStats/" + userId + "/history.csv");
+
+        // Load available years
+        List<TaxYearInfo> years = cgService.getAvailableTaxYears();
+
+        // Determine selected year
+        String yearParam = ctx.query("year").valueOrNull();
+        TaxYearInfo selectedYear;
+
+        if (yearParam != null && !yearParam.isBlank()) {
+            try {
+                int y = Integer.parseInt(yearParam);
+                selectedYear = new TaxYearInfo(y);
+            } catch (NumberFormatException e) {
+                selectedYear = years.get(0);
+            }
         } else {
-            taxYearStart = service.getCurrentTaxYear().startYear;
+            selectedYear = years.get(0);
         }
 
-        CapitalGainsSummary summary = service.getSummaryForYear(taxYearStart);
-        List<TaxYearInfo> years = service.getAvailableTaxYears();
+        // Mark selected year
         for (TaxYearInfo y : years) {
-            y.selected = (y.startYear == taxYearStart);
+            y.selected = (y.startYear == selectedYear.startYear);
         }
 
+        // Compute summary
+        CapitalGainsSummary summary = cgService.getSummaryForYear(selectedYear.startYear);
+
+        // Build model
         Map<String, Object> model = new HashMap<>();
-        model.put("summary", summary);
         model.put("years", years);
-        model.put("selectedYear", taxYearStart);
-
-        // Optional: message if no SELLs
-        if (summary.transactions == null || summary.transactions.isEmpty()) {
-            model.put("noSalesMessage", "No realised gains or losses for this tax year.");
-        }
+        model.put("selectedYear", selectedYear);
+        model.put("summary", summary);
 
         return new ModelAndView("capitalgains.hbs", model);
     }
 
-    /** JSON: SELL transactions for a given tax year. */
-    @GET("/transactions")
-    public Object transactions(@QueryParam Integer year, Context ctx) {
-        int taxYearStart;
-        if (year != null) {
-            taxYearStart = year;
-        } else {
-            taxYearStart = service.getCurrentTaxYear().startYear;
-        }
-        return service.getTransactionsForYear(taxYearStart);
-    }
+    /* ============================================================
+       TRANSACTIONS PAGE
+       ============================================================ */
+    @GET
+    @Path("/transactions")
+    public Object transactions(Context ctx) {
 
-    /** JSON: summary for a given tax year. */
-    @GET("/summary/json")
-    public Object summaryJson(@QueryParam Integer year, Context ctx) {
-        int taxYearStart;
-        if (year != null) {
-            taxYearStart = year;
-        } else {
-            taxYearStart = service.getCurrentTaxYear().startYear;
+        // --- FIXED SESSION HANDLING ---
+        var userIdValue = ctx.session().get("userId");
+        if (userIdValue == null || userIdValue.value() == null) {
+            return ctx.sendRedirect("/login");
         }
-        return service.getSummaryForYear(taxYearStart);
+        String userId = userIdValue.value();
+
+        User user = userService.findById(userId);
+        InvestmentService invService = user.getInvestmentService();
+
+        CapitalGainsService cgService = new CapitalGainsService(invService);
+
+        cgService.loadPricesCsv("prices.csv");
+        cgService.loadHistoryCsv("UserStats/" + userId + "/history.csv");
+
+        // Load available years
+        List<TaxYearInfo> years = cgService.getAvailableTaxYears();
+
+        // Determine selected year
+        String yearParam = ctx.query("year").valueOrNull();
+        TaxYearInfo selectedYear;
+
+        if (yearParam != null && !yearParam.isBlank()) {
+            try {
+                int y = Integer.parseInt(yearParam);
+                selectedYear = new TaxYearInfo(y);
+            } catch (NumberFormatException e) {
+                selectedYear = years.get(0);
+            }
+        } else {
+            selectedYear = years.get(0);
+        }
+
+        // Mark selected year
+        for (TaxYearInfo y : years) {
+            y.selected = (y.startYear == selectedYear.startYear);
+        }
+
+        // Load realised transactions
+        List<InvestmentTransaction> realised =
+                cgService.getRealisedTransactionsForYear(selectedYear.startYear);
+
+        // Build model
+        Map<String, Object> model = new HashMap<>();
+        model.put("years", years);
+        model.put("selectedYear", selectedYear);
+        model.put("transactions", realised);
+
+        return new ModelAndView("capitalgains-transactions.hbs", model);
     }
 }
 
