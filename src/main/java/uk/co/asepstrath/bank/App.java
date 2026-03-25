@@ -22,6 +22,8 @@ import org.slf4j.Logger;
 import uk.co.asepstrath.bank.user.LoginController;
 import uk.co.asepstrath.bank.user.LoginController_;
 import uk.co.asepstrath.bank.user.UserService;
+import uk.co.asepstrath.bank.capitalgains.CapitalGainsController_;
+import uk.co.asepstrath.bank.investments.InvestmentService;
 
 import javax.sql.DataSource;
 import java.sql.Connection;
@@ -52,6 +54,8 @@ public class App extends Jooby {
         Logger log = getLog();
 
         Account account = new Account();
+        InvestmentService investmentService = new InvestmentService(account);
+
 
         // --- Current prices (single source of truth) ---
         CurrentPriceLoader currentPriceLoader = new CurrentPriceLoader("currentprices.csv");
@@ -84,11 +88,14 @@ public class App extends Jooby {
         });
 
 
-        
+
         String asepBaseUrl = System.getenv("ASEP_BASE_URL");
         if (asepBaseUrl == null || asepBaseUrl.isBlank()) {
             asepBaseUrl = getConfig().getString("asep.baseUrl");
         }
+        //mvc(new InvestmentController_(ds, log, account, priceService, equitiesService));
+        mvc(new InvestmentController_(ds, log, account, priceService, equitiesService, investmentService));
+        mvc(new CapitalGainsController_(log, investmentService));
 
 
         /*
