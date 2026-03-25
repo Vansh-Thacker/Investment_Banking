@@ -1,41 +1,31 @@
 package uk.co.asepstrath.bank.cash;
+
 import java.time.LocalDateTime;
 
 public class CashTransaction {
-    private LocalDateTime timestamp;
-    private String type; // is it a deposit or a withdrawl
-    private int amount;
-    private int balanceAfter;
-    public CashTransaction(int amount_, String transactionType, int currentBal) {
-        this.amount = amount_;
-        this.type = transactionType;
-        this.timestamp = LocalDateTime.now();
-        if (type.equals("WITHDRAWAL")) {
-            balanceAfter = currentBal-amount;
-        } else {
-            balanceAfter = currentBal+amount;
-        }
-    }
-    //csv constructor
-    public CashTransaction(LocalDateTime timestamp, String type, int amount, int balanceAfter) {
-        this.timestamp = timestamp;
+
+    private final LocalDateTime dateTime;
+    private final String type;
+    private final String ticker;
+    private final int amount; // pence
+
+    public CashTransaction(LocalDateTime dateTime, String type, String ticker, int amount) {
+        this.dateTime = dateTime;
         this.type = type;
+        this.ticker = ticker;
         this.amount = amount;
-        this.balanceAfter = balanceAfter;
     }
 
-    public int getAmount() {
-        return amount;
-    }
-    public String getType() {
-        return type;
-    }
-    public int getBalanceAfter() {
-        return balanceAfter;
+    // For new DEPOSIT/WITHDRAWAL
+    public CashTransaction(int amount, String type) {
+        this.dateTime = LocalDateTime.now();
+        this.type = type;
+        this.ticker = "";
+        this.amount = amount;
     }
 
-    public LocalDateTime getDateTime() {
-        return timestamp;
-    }
-
+    public LocalDateTime getDateTime() { return dateTime; }
+    public String getType() { return type; }
+    public String getTicker() { return ticker; }
+    public int getAmount() { return amount; }
 }

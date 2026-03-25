@@ -7,10 +7,13 @@ import io.jooby.netty.NettyServer;
 import uk.co.asepstrath.bank.cash.CashController;
 import uk.co.asepstrath.bank.Account;
 import uk.co.asepstrath.bank.cash.CashController_;
-import uk.co.asepstrath.bank.evaluation.EvaluationController;
-//import uk.co.asepstrath.bank.evaluation.EvaluationController_;
+import uk.co.asepstrath.bank.evaluation.CurrentPriceLoader;
+import uk.co.asepstrath.bank.evaluation.CurrentPriceService;
+import uk.co.asepstrath.bank.evaluation.EquitiesService;
+import uk.co.asepstrath.bank.evaluation.PriceService;
 import uk.co.asepstrath.bank.investments.InvestmentController;
 import uk.co.asepstrath.bank.investments.InvestmentController_;
+import uk.co.asepstrath.bank.investments.InvestmentService;
 import io.jooby.Jooby;
 import io.jooby.handlebars.HandlebarsModule;
 import io.jooby.helper.UniRestExtension;
@@ -44,40 +47,48 @@ public class App extends Jooby {
         assets("/assets/*", "/assets");
         assets("/service_worker.js","/service_worker.js");
 
-        /*
-        Now we set up our controllers and their dependencies
-         */
-        //DataSource ds = require(DataSource.class);
-
-
-
-        /*  // Commented out previous controller stuff
-        Logger log = getLog();
-
-        mvc(new CashController_(log, new Account())); // the new controllers
-        mvc(new LoginController_(log, new UserService())); // the new controllers
-        */
 
 
         Logger log = getLog();
 
-        UserService users = new UserService();
         Account account = new Account();
 
-        // Create controller manually
+        // --- Current prices (single source of truth) ---
+        CurrentPriceLoader currentPriceLoader = new CurrentPriceLoader("currentprices.csv");
+        CurrentPriceService currentPriceService = new CurrentPriceService(currentPriceLoader);
+
+        // --- UserService now needs CurrentPriceService ---
+        UserService users = new UserService(currentPriceService);
+
+        // --- Cash controller ---
         CashController cash = new CashController(log, account);
-
-        // Inject UserService
         cash.setUserService(users);
-
-        // Register it with Jooby
         mvc(new CashController_(cash));
         mvc(new LoginController_(log, users));
 
+        // --- Price + equities services ---
+        DataSource ds = require(DataSource.class);
+        PriceService priceService = new PriceService();
+        EquitiesService equitiesService = new EquitiesService();
+
+        // --- Investment controller uses SAME CurrentPriceService ---
+        InvestmentController investments =
+                new InvestmentController(ds, log, account, priceService, equitiesService, currentPriceService);
+        investments.setUserService(users);
+        mvc(new InvestmentController_(investments));
 
 
-        //mvc(new InvestmentController(ds, log));
-        //mvc(new EvaluationController(ds, log));
+        get("/import-api", ctx -> {
+            uk.co.asepstrath.bank.apiimport.PricesImporter.importPrices();
+            return "Import complete";
+        });
+
+
+        
+        String asepBaseUrl = System.getenv("ASEP_BASE_URL");
+        if (asepBaseUrl == null || asepBaseUrl.isBlank()) {
+            asepBaseUrl = getConfig().getString("asep.baseUrl");
+        }
 
 
         /*
@@ -99,20 +110,24 @@ public class App extends Jooby {
         Logger log = getLog();
         log.info("Starting Up...");
 
-        // Fetch DB Source
-        DataSource ds = require(DataSource.class);
-        // Open Connection to DB
-
-        try (Connection connection = ds.getConnection()) {
-            //
-            Statement stmt = connection.createStatement();
-            stmt.executeUpdate("CREATE TABLE `Example` (`Key` varchar(255),`Value` varchar(255))");
-            stmt.executeUpdate("INSERT INTO Example " + "VALUES ('WelcomeMessage', 'Welcome to A Bank')");
-        } catch (SQLException e) {
-            log.error("Database Creation Error",e);
+        // 1. Run the API Importers
+        try {
+            log.info("Importing data from API...");
+            uk.co.asepstrath.bank.apiimport.PricesImporter.importPrices();
+            log.info("API Import successful.");
+        } catch (Exception e) {
+            log.error("Failed to import data from API", e);
         }
 
-
+        // 2. Database Setup (Existing code)
+        DataSource ds = require(DataSource.class);
+        try (Connection connection = ds.getConnection()) {
+            Statement stmt = connection.createStatement();
+            stmt.executeUpdate("CREATE TABLE `Example` (`Key` varchar(255),`Value` varchar(255))");
+            stmt.executeUpdate("INSERT INTO Example VALUES ('WelcomeMessage', 'Welcome to A Bank')");
+        } catch (SQLException e) {
+            log.error("Database Creation Error", e);
+        }
     }
 
     /*

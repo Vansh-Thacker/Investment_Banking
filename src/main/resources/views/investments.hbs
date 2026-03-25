@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <link rel="stylesheet" href="/assets/investments.css">
+    <title>Investments | Titan Invest</title>
+</head>
+
+<body class="invest-page">
+
+<nav class="top-nav">
+    <a href="/cash/cashsidefrontend">Cash Dashboard</a>
+    <a href="/logout">Logout</a>
+</nav>
+
+<section class="invest-container">
+    <h2>Your Investment Portfolio</h2>
+
+    <!-- CASH BALANCE -->
+    <div class="cash-box">
+        <p class="label">Cash Balance</p>
+        <p class="value">£<span id="cash-balance">{{cashBalance}}</span></p>
+    </div>
+
+    <!-- ACTION BUTTONS -->
+    <div class="action-row">
+        <a class="btn" href="/investments/buy">Buy Stock</a>
+        <a class="btn" href="/investments/sell">Sell Stock</a>
+        <a class="btn" href="/investments/historyfrontend">Transaction History</a>
+    </div>
+
+    <!-- PORTFOLIO TABLE -->
+    <table class="portfolio-table">
+        <tr>
+            <th>Ticker</th>
+            <th>Shares</th>
+            <th>Avg Price (£)</th>
+            <th>Total Invested (£)</th>
+            {{!-- <th>Current Price (£)</th> --}}
+            <th>Current Value (£)</th>
+            <th>P/L (£)</th>
+            <th>P/L (%)</th>
+        </tr>
+
+        {{#each positions}}
+        <tr>
+            <td>{{ticker}}</td>
+            <td>{{shares}}</td>
+            <td class="gbp">{{averageBookPrice}}</td>
+            <td class="gbp">{{totalInvested}}</td>
+            {{!-- <td class="gbp">{{currentPrice}}</td> --}}
+            <td class="gbp">{{currentValue}}</td>
+
+            <!-- P/L -->
+            <td class="pnl">{{unrealizedPnLGbp}}</td>
+            <td class="pnl">{{unrealizedPnLPercentFormatted}}</td>
+        </tr>
+        {{/each}}
+    </table>
+</section>
+
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+    // Convert cash balance
+    const bal = document.getElementById('cash-balance');
+    if (bal) {
+        const raw = parseInt(bal.textContent.trim() || "0", 10);
+        bal.textContent = (raw / 100).toFixed(2);
+    }
+
+    // Format GBP cells
+    document.querySelectorAll('.gbp').forEach(cell => {
+        const raw = parseFloat(cell.textContent || "0");
+        if (!isNaN(raw)) cell.textContent = raw.toFixed(2);
+    });
+
+    // Colour P/L cells
+    document.querySelectorAll('.pnl').forEach(cell => {
+        const val = parseFloat(cell.textContent);
+        if (isNaN(val)) return;
+
+        if (val > 0) cell.style.color = "#22c55e";      // green
+        else if (val < 0) cell.style.color = "#ef4444"; // red
+        else cell.style.color = "#94a3b8";              // neutral
+
+        cell.textContent = val.toFixed(2);
+    });
+});
+</script>
+
+</body>
+</html>

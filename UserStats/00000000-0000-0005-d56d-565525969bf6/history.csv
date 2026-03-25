@@ -1,0 +1,3 @@
+date,type,ticker,amount,balanceAfter
+2025-02-03T08:00:00,BUY,CRC,9000000,0
+2025-02-03T08:15:00,BUY,CRC,45000,0

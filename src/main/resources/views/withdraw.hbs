@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <link rel="stylesheet" href="/assets/style.css">
+    <title>Withdraw</title>
+</head>
+
+<body class="auth-page">
+
+<nav class="top-nav">
+    <a href="/cash/cashsidefrontend">Home</a>
+    <a href="/logout">Logout</a>
+</nav>
+
+<section class="auth-form">
+    <h2>Withdraw Funds</h2>
+
+    <form id="withdrawForm" action="/cash/withdraw" method="get">
+        <label style="color: #ffffff;">Amount (£)</label>
+        <input name="amount" id="withdraw-amount" type="number" step="0.01" required>
+        <button type="submit">Withdraw</button>
+    </form>
+</section>
+
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+    const form = document.getElementById('withdrawForm');
+    form.addEventListener('submit', function (e) {
+        const input = document.getElementById('withdraw-amount');
+        const val = parseFloat(input.value);
+        if (isNaN(val) || val <= 0) {
+            e.preventDefault();
+            alert('Enter positive amount');
+            return;
+        }
+        input.value = Math.round(val * 100); // pounds → pence
+    });
+});
+</script>
+
+</body>
+</html>

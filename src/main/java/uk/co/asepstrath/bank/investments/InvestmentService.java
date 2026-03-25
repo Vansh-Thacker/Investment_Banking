@@ -1,162 +1,393 @@
 package uk.co.asepstrath.bank.investments;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import uk.co.asepstrath.bank.Account;
-import java.io.BufferedReader;
-import java.io.InputStream;
-import java.io.InputStreamReader;
-import java.text.NumberFormat;
+import uk.co.asepstrath.bank.evaluation.CurrentPriceService;
+import uk.co.asepstrath.bank.evaluation.PriceLoader;
+
+import java.io.*;
 import java.time.LocalDateTime;
 import java.util.*;
 import java.util.stream.Collectors;
 
 public class InvestmentService {
 
-    private static final Logger log = LoggerFactory.getLogger(InvestmentService.class);
     private static final String TYPE_BUY = "BUY";
+    private static final String TYPE_SELL = "SELL";
 
     private final Account account;
+    private final CurrentPriceService currentPriceService;
+    private final String csv_path;
+
     private final Map<String, Position> positions = new HashMap<>();
     private final List<InvestmentTransaction> history = new ArrayList<>();
 
-    public InvestmentService(Account account) {
+    public InvestmentService(Account account, CurrentPriceService currentPriceService, String csvPath) {
         this.account = account;
+        this.currentPriceService = currentPriceService;
+        this.csv_path = csvPath;
+
+        ensureCsvExists();
+        loadFromCsvOnStartup();
     }
 
-    public void buy(String ticker, int shares, double price) {
-        if (shares <= 0 || price <= 0) {
-            throw new IllegalArgumentException("Shares and price must be positive");
+    private void ensureCsvExists() {
+        try {
+            File f = new File(csv_path);
+            File parent = f.getParentFile();
+            if (parent != null) {
+                parent.mkdirs();
+            }
+            if (!f.exists()) {
+                try (PrintWriter w = new PrintWriter(f)) {
+                    w.println("timestamp,type,ticker,amount");
+                }
+            }
+        } catch (Exception e) {
+            throw new RuntimeException("Failed to init investments CSV: " + csv_path, e);
         }
-        // rounding to int to match Account withdraw(int)
-        int cost = (int) Math.round(shares * price);
-        account.withdraw(cost);
-
-        // get or make position for this ticker 
-        Position position = positions.computeIfAbsent(ticker, k -> {
-            Position p = new Position();
-            p.ticker = ticker;
-            p.shares = 0;
-            p.averageBookPrice = 0;
-            p.totalInvested = 0;
-            return p;
-        });
-        position.shares += shares;
-        position.totalInvested += cost;
-        // avg price per share -- int div as position uses it for averageBookPrice
-        position.averageBookPrice = position.totalInvested / position.shares;
-
-        record(TYPE_BUY, ticker, shares, price);
     }
 
-    
-    // execute sale, decrease holdings, credit account, close position if 0
-    // record transaction with timestamp, price and proceeds. returns confirmation
-     
-    public SellConfirmation sell(String ticker, int shares, double price) {
-        if (shares <= 0 || price <= 0) {
-            throw new IllegalArgumentException("Shares and price must be positive");
+    private void loadFromCsvOnStartup() {
+        try {
+            File f = new File(csv_path);
+            if (!f.exists()) return;
+
+            try (InputStream in = new FileInputStream(f)) {
+                PriceLoader loader = new PriceLoader("prices.csv");
+                importCsv(in, loader);
+            }
+        } catch (Exception e) {
+            throw new RuntimeException("Failed to load investments CSV on startup: " + csv_path, e);
         }
-        Position position = positions.get(ticker);
-        int held = position == null ? 0 : position.shares;
-        if (position == null || position.shares < shares) {
-            log.error("Validation: insufficient shares for SELL {} - held {}, requested {}. Processing transaction anyway (historical data).", ticker, held, shares);
+    }
+
+    /* ============================================================
+       CSV IMPORT (real prices, Option 1)
+       ============================================================ */
+
+    public void importCsv(InputStream csvStream, PriceLoader priceLoader) {
+        try (BufferedReader reader = new BufferedReader(new InputStreamReader(csvStream))) {
+
+            String header = reader.readLine();
+            if (header == null) return;
+
+            String line;
+            while ((line = reader.readLine()) != null) {
+
+                if (line.trim().isEmpty()) continue;
+
+                String[] parts = line.split(",", -1);
+
+                /* ============================
+                   FORMAT A: 4 columns
+                   timestamp,type,ticker,amountPence
+                   ============================ */
+                if (parts.length == 5) {
+                    LocalDateTime ts = LocalDateTime.parse(parts[0].trim());
+                    String type = parts[1].trim().toUpperCase();
+                    String ticker = parts[2].trim().toUpperCase();
+                    int amountPence = Integer.parseInt(parts[3].trim());
+
+                    if (type.equals("DEPOSIT") || type.equals("WITHDRAW")) continue;
+                    if (!type.equals("BUY") && !type.equals("SELL")) continue;
+
+                    Double price = priceLoader.getPrice(ticker, ts);
+                    if (price == null) continue;
+
+                    int shares = (int) Math.floor((amountPence / 100.0) / price);
+                    if (shares <= 0) continue;
+
+                    if (type.equals("BUY")) {
+                        applyBuyFromHistory(ts, ticker, shares, price);
+                    } else {
+                        applySellFromHistory(ts, ticker, shares, price);
+                    }
+
+                    continue;
+                }
+
+                /* ============================
+                   FORMAT B: 5 columns (your real format)
+                   date,type,ticker,amount,balanceAfter
+                   ============================ */
+                if (parts.length == 5) {
+
+                    if (parts[0].equalsIgnoreCase("date")) continue;
+
+                    LocalDateTime ts = LocalDateTime.parse(parts[0].trim());
+                    String type = parts[1].trim().toUpperCase();
+                    String ticker = parts[2].trim().toUpperCase();
+                    int amountPence = Integer.parseInt(parts[3].trim());
+
+                    if (type.equals("DEPOSIT") || type.equals("WITHDRAW")) continue;
+                    if (!type.equals("BUY") && !type.equals("SELL")) continue;
+
+                    Double price = priceLoader.getPrice(ticker, ts);
+
+                    if (price == null) {
+                        List<Double> allPrices = priceLoader.getAllPricesForTicker(ticker);
+
+                        if (allPrices != null && !allPrices.isEmpty()) {
+                            double sum = 0;
+                            for (double p : allPrices) sum += p;
+                            price = sum / allPrices.size();
+                        }
+                    }
+
+                    if (price == null) {
+                        System.out.println("NO PRICE FOUND FOR " + ticker + " @ " + ts + " AND NO AVERAGE AVAILABLE");
+                        continue;
+                    }
+
+                    int shares = (int) Math.floor((amountPence / 100.0) / price);
+                    if (shares <= 0) continue;
+
+                    if (type.equals("BUY")) {
+                        applyBuyFromHistory(ts, ticker, shares, price);
+                    } else {
+                        applySellFromHistory(ts, ticker, shares, price);
+                    }
+
+                    continue;
+                }
+
+                /* ============================
+                   FORMAT C: legacy 5-column
+                   timestamp,type,ticker,shares,price
+                   ============================ */
+                if (parts.length >= 5) {
+                    LocalDateTime ts = LocalDateTime.parse(parts[0].trim());
+                    String type = parts[1].trim().toUpperCase();
+                    String ticker = parts[2].trim().toUpperCase();
+                    int shares = Integer.parseInt(parts[3].trim());
+                    double price = Double.parseDouble(parts[4].trim());
+
+                    if (!type.equals("BUY") && !type.equals("SELL")) continue;
+
+                    if (type.equals("BUY")) {
+                        applyBuyFromHistory(ts, ticker, shares, price);
+                    } else {
+                        applySellFromHistory(ts, ticker, shares, price);
+                    }
+                }
+            }
+
+        } catch (Exception e) {
+            throw new RuntimeException("Failed to import investments CSV", e);
         }
+    }
+
+    /* ============================================================
+       APPLY HISTORY (used by CSV importer)
+       ============================================================ */
+
+    private void applyBuyFromHistory(LocalDateTime ts, String ticker, int shares, double price) {
+        int cost = (int) Math.round(shares * price * 100);
+
+        Position pos = positions.computeIfAbsent(ticker, k -> new Position());
+        pos.ticker = ticker;
+        pos.shares += shares;
+        pos.totalInvested += cost;
+        pos.averageBookPrice = pos.totalInvested / pos.shares;
+
+        InvestmentTransaction tx = new InvestmentTransaction();
+        tx.timestamp = ts;
+        tx.type = "BUY";
+        tx.ticker = ticker;
+        tx.shares = shares;
+        tx.price = price;
+        tx.proceeds = 0;
+        tx.realizedGainLoss = null;
+        tx.sharesAfter = pos.shares;
+
+        history.add(tx);
+    }
+
+    private void applySellFromHistory(LocalDateTime ts, String ticker, int shares, double price) {
+        Position pos = positions.get(ticker);
+        int held = pos == null ? 0 : pos.shares;
+
+        int costBasis = (pos != null && pos.shares > 0)
+                ? (shares * pos.averageBookPrice)
+                : 0;
+
         double proceeds = shares * price;
-        record("SELL", ticker, shares, price, proceeds);
-        account.deposit((int) Math.round(proceeds));
-        if (position == null) {
-            position = new Position();
-            position.ticker = ticker;
-            position.shares = 0;
-            position.averageBookPrice = 0;
-            position.totalInvested = 0;
-            positions.put(ticker, position);
+        double realized = proceeds - costBasis;
+        int sharesAfter = (pos != null && pos.shares >= shares) ? (pos.shares - shares) : 0;
+
+        InvestmentTransaction tx = new InvestmentTransaction();
+        tx.timestamp = ts;
+        tx.type = "SELL";
+        tx.ticker = ticker;
+        tx.shares = shares;
+        tx.price = price;
+        tx.proceeds = proceeds;
+        tx.realizedGainLoss = realized;
+        tx.sharesAfter = sharesAfter;
+
+        history.add(tx);
+
+        if (pos != null) {
+            pos.totalInvested -= costBasis;
+            pos.shares -= shares;
+            if (pos.shares <= 0) positions.remove(ticker);
+            else pos.averageBookPrice = pos.totalInvested / pos.shares;
         }
-        position.shares -= shares;
-        if (position.shares <= 0) {
-            positions.remove(ticker);
-        }
-        return buildSellConfirmation(ticker, shares, price);
     }
 
-    private static SellConfirmation buildSellConfirmation(String ticker, int shares, double price) {
-        NumberFormat gbp = NumberFormat.getCurrencyInstance(Locale.UK);
-        double totalEarnings = shares * price;
+    /* ============================================================
+       WRITE HISTORY TO CSV (unified 4-column format)
+       ============================================================ */
+
+    private void writeHistoryToCsv() {
+        try (PrintWriter writer = new PrintWriter(new FileWriter(csv_path))) {
+
+            writer.println("date,type,ticker,amount,balanceAfter");
+
+            for (InvestmentTransaction tx : history) {
+                int amountPence = (int) Math.round(tx.shares * tx.price * 100);
+
+                writer.println(
+                        tx.timestamp + "," +
+                        tx.type + "," +
+                        tx.ticker + "," +
+                        amountPence + "," +
+                        0
+                );
+            }
+
+        } catch (IOException e) {
+            throw new RuntimeException("Failed to write " + csv_path, e);
+        }
+    }
+
+    /* ============================================================
+       PUBLIC OPERATIONS
+       ============================================================ */
+
+    public PurchaseResult newTransaction(String ticker, int shares, double price) {
+        if (shares <= 0) {
+            throw new IllegalArgumentException("Shares must be positive");
+        }
+
+        int costPence = (int) Math.round(shares * price * 100);
+        if (costPence > account.getBalance()) {
+            throw new IllegalArgumentException("Insufficient funds");
+        }
+
+        account.withdraw(costPence);
+
+        Position pos = positions.computeIfAbsent(ticker, k -> new Position());
+        pos.ticker = ticker;
+        pos.shares += shares;
+        pos.totalInvested += costPence;
+        pos.averageBookPrice = pos.totalInvested / pos.shares;
+
+        record(TYPE_BUY, ticker, shares, price, pos.shares);
+
+        PurchaseResult result = new PurchaseResult();
+        result.success = true;
+        result.ticker = ticker;
+        result.shares = shares;
+        result.price = price;
+        result.balanceAfter = account.getBalance();
+        return result;
+    }
+
+    public SellConfirmation sell(String ticker, int shares, double price) {
+        Position pos = positions.get(ticker);
+        if (pos == null || pos.shares < shares) {
+            throw new IllegalArgumentException("Not enough shares to sell");
+        }
+
+        int costBasis = pos.averageBookPrice * shares;
+        int proceedsPence = (int) Math.round(shares * price * 100);
+
+        account.deposit(proceedsPence);
+
+        pos.totalInvested -= costBasis;
+        pos.shares -= shares;
+        if (pos.shares <= 0) {
+            positions.remove(ticker);
+        } else {
+            pos.averageBookPrice = pos.totalInvested / pos.shares;
+        }
+
+        record(TYPE_SELL, ticker, shares, price, pos.shares);
+
         SellConfirmation c = new SellConfirmation();
         c.ticker = ticker;
         c.shares = shares;
         c.finalSalePrice = price;
-        c.finalSalePriceGbp = gbp.format(price);
-        c.totalEarningsGbp = gbp.format(totalEarnings);
-        c.successMessage = String.format("Sale successful. Sold %d shares of %s at %s for total earnings %s.",
-                shares, ticker, c.finalSalePriceGbp, c.totalEarningsGbp);
-        c.portfolioUrl = "/investments/positions";
-        c.transactionHistoryUrl = "/investments/transactions";
         return c;
     }
 
-    
-    // return sale details for confirmation screen. sale executes when user calls sell()
-    
     public SalePreview getSalePreview(String ticker, int shares, double price) {
-        if (shares <= 0 || price <= 0) {
-            throw new IllegalArgumentException("Shares and price must be positive");
+        Position pos = positions.get(ticker);
+        if (pos == null || pos.shares < shares) {
+            throw new IllegalArgumentException("Not enough shares to sell");
         }
-        SalePreview p = new SalePreview();
-        p.symbol = ticker;
-        p.name = ticker; // placeholder until i integerate stock name source
-        p.shares = shares;
-        p.estimatedPricePerShare = price;
-        p.estimatedTotalProceedsGbp = NumberFormat.getCurrencyInstance(Locale.UK).format(shares * price);
-        return p;
+
+        SalePreview preview = new SalePreview();
+        preview.name = ticker;
+        preview.shares = shares;
+        preview.estimatedPricePerShare = pos.averageBookPrice * shares / 100.0;
+        return preview;
     }
 
-    public void importCsv(InputStream csvStream) {
-    //imports the csv file and stores it into an investment transaction object
-    }
-
-    private void record(String type, String ticker, int shares, double price) {
-        record(type, ticker, shares, price, 0.0);
-    }
-
-    private void record(String type, String ticker, int shares, double price, double proceeds) {
-        if (shares <= 0 || price <= 0) {
-            throw new IllegalArgumentException("Shares and price must be positive");
-        }
-        InvestmentTransaction invRecord = new InvestmentTransaction();
-        invRecord.timestamp = LocalDateTime.now();
-        invRecord.type = type;
-        invRecord.ticker = ticker;
-        invRecord.shares = shares;
-        invRecord.price = price;
-        invRecord.proceeds = proceeds;
-        history.add(invRecord);
-    }
+    /* ============================================================
+       GETTERS
+       ============================================================ */
 
     public Collection<Position> getPositions() {
-        return positions.values(); //get current stock holdings
+        return positions.values();
     }
 
     public Position getPosition(String ticker) {
-        return positions.get(ticker); //return specific stock holding
+        return positions.get(ticker);
+    }
+
+    public int getCashBalance() {
+        return account.getBalance();
     }
 
     public List<InvestmentTransaction> getHistory() {
-        return history; //returns buy and sell history
+        return history;
     }
 
-    // returns only BUY (purchase) transactions sorted by timestamp
-    // ascending = sortOrder "asc" for oldest first, null or desc for newest
-    
-    public List<InvestmentTransaction> getPurchaseHistory(String sortOrder) {
-        boolean ascending = "asc".equalsIgnoreCase(sortOrder);
+    public List<InvestmentTransaction> getHistorySorted(String sortOrder) {
+        boolean asc = "asc".equalsIgnoreCase(sortOrder);
         return history.stream()
-                .filter(tx -> TYPE_BUY.equals(tx.type))
-                .sorted(ascending
+                .sorted(asc
                         ? Comparator.comparing(t -> t.timestamp)
                         : Comparator.<InvestmentTransaction, LocalDateTime>comparing(t -> t.timestamp).reversed())
                 .collect(Collectors.toList());
     }
-}
 
+    public List<InvestmentTransaction> getPurchaseHistory(String sortOrder) {
+        boolean asc = "asc".equalsIgnoreCase(sortOrder);
+        return history.stream()
+                .filter(tx -> TYPE_BUY.equals(tx.type))
+                .sorted(asc
+                        ? Comparator.comparing(t -> t.timestamp)
+                        : Comparator.<InvestmentTransaction, LocalDateTime>comparing(t -> t.timestamp).reversed())
+                .collect(Collectors.toList());
+    }
+
+    /* ============================================================
+       RECORD HELPERS
+       ============================================================ */
+
+    private void record(String type, String ticker, int shares, double price, int sharesAfter) {
+        InvestmentTransaction tx = new InvestmentTransaction();
+        tx.timestamp = LocalDateTime.now();
+        tx.type = type;
+        tx.ticker = ticker;
+        tx.shares = shares;
+        tx.price = price;
+        tx.sharesAfter = sharesAfter;
+
+        history.add(tx);
+        writeHistoryToCsv();
+    }
+}

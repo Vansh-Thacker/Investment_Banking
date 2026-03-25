@@ -1,40 +1,58 @@
 package uk.co.asepstrath.bank.cash;
+
 import io.jooby.Context;
 import io.jooby.Jooby;
 import io.jooby.annotation.*;
 import io.jooby.ModelAndView;
-import io.jooby.annotation.*;
 import org.slf4j.Logger;
 
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
 import java.util.HashMap;
 import java.util.Map;
-import uk.co.asepstrath.bank.Account;
-import uk.co.asepstrath.bank.user.UserService;
 
+import uk.co.asepstrath.bank.Account;
+import uk.co.asepstrath.bank.user.User;
+import uk.co.asepstrath.bank.user.UserService;
 
 @Path("/cash")
 public class CashController extends Jooby {
 
     private UserService users;
     private final CashService service;
+    private final Logger log;
 
     public CashController(Logger log, Account account) {
         this(log, account, new CashService(account));
     }
 
-    // Test constructor (inject custom CashService)
     public CashController(Logger log, Account account, CashService service) {
+        this.log = log;
         this.service = service;
-    }
-
-    public CashService getService() {
-        return service;
     }
 
     public void setUserService(UserService users) {
         this.users = users;
+    }
+
+    // Build per-user CashService using UserStats/<id>/history.csv
+    private CashService getUserService(Context ctx) {
+
+        if (this.users == null) {
+            return this.service;
+        }
+
+        String userId = ctx.session().get("userId").value();
+        String path = "UserStats/" + userId + "/history.csv";
+
+        // Load user balance from users.csv
+        User user = users.findById(userId);
+
+        // Create account with correct starting balance
+        Account account = new Account();
+        account.forceSetBalance(user.getBalancePence());
+
+        return new CashService(account, path);
     }
 
     @GET
@@ -42,70 +60,76 @@ public class CashController extends Jooby {
         ctx.sendRedirect("/cash/cashsidefrontend");
     }
 
-
-
     @POST("/deposit")
     public void deposit(CashRequest req, Context ctx) {
         try {
-            service.deposit(req.amount);
+            CashService userService = getUserService(ctx);
+            userService.deposit(req.amount);
+
+            // Update balance in users.csv
+            if (users != null) {
+                String userId = ctx.session().get("userId").value();
+                users.updateBalance(userId, userService.getBalance());
+            }
+
             ctx.sendRedirect("/cash/cashsidefrontend");
 
-            // saved balance updated after every transaction
-            String username = ctx.session().get("user").value();
-            users.updateBalance(username, service.getBalance());
-
-        } catch (IllegalArgumentException e){
+        } catch (IllegalArgumentException e) {
             String msg = URLEncoder.encode(e.getMessage(), StandardCharsets.UTF_8);
             ctx.sendRedirect("/cash/cashsidefrontend?error=" + msg);
         }
     }
 
-    // Simple GET endpoint to allow HTML forms / links to deposit
     @GET("/deposit")
     public void depositGet(@QueryParam("amount") int amount, Context ctx) {
-        // try, catch to stop page from crashing due to errors
         try {
-            service.deposit(amount);
+            CashService userService = getUserService(ctx);
+            userService.deposit(amount);
+
+            if (users != null) {
+                String userId = ctx.session().get("userId").value();
+                users.updateBalance(userId, userService.getBalance());
+            }
+
             ctx.sendRedirect("/cash/cashsidefrontend");
 
-            // saved balance updated after every transaction
-            String username = ctx.session().get("user").value();
-            users.updateBalance(username, service.getBalance());
-            
         } catch (IllegalArgumentException e) {
             String msg = URLEncoder.encode(e.getMessage(), StandardCharsets.UTF_8);
             ctx.sendRedirect("/cash/cashsidefrontend?error=" + msg);
         }
-
     }
 
     @POST("/withdraw")
     public void withdraw(CashRequest req, Context ctx) {
         try {
-            service.withdraw(req.amount);
-            ctx.sendRedirect("/cash/cashsidefrontend");
+            CashService userService = getUserService(ctx);
+            userService.withdraw(req.amount);
 
-            // saved balance updated after every transaction
-            String username = ctx.session().get("user").value();
-            users.updateBalance(username, service.getBalance());
+            if (users != null) {
+                String userId = ctx.session().get("userId").value();
+                users.updateBalance(userId, userService.getBalance());
+            }
+
+            ctx.sendRedirect("/cash/cashsidefrontend");
 
         } catch (IllegalArgumentException e) {
             String msg = URLEncoder.encode(e.getMessage(), StandardCharsets.UTF_8);
             ctx.sendRedirect("/cash/cashsidefrontend?error=" + msg);
         }
-
     }
 
-    // Simple GET endpoint to allow HTML forms / links to withdraw
     @GET("/withdraw")
     public void withdrawGet(@QueryParam("amount") int amount, Context ctx) {
         try {
-            service.withdraw(amount);
-            ctx.sendRedirect("/cash/cashsidefrontend");
+            CashService userService = getUserService(ctx);
+            userService.withdraw(amount);
 
-            // saved balance updated after every transaction
-            String username = ctx.session().get("user").value();
-            users.updateBalance(username, service.getBalance());
+            if (users != null) {
+                String userId = ctx.session().get("userId").value();
+                users.updateBalance(userId, userService.getBalance());
+            }
+
+            ctx.sendRedirect("/cash/cashsidefrontend");
 
         } catch (IllegalArgumentException e) {
             String msg = URLEncoder.encode(e.getMessage(), StandardCharsets.UTF_8);
@@ -113,48 +137,50 @@ public class CashController extends Jooby {
         }
     }
 
-
     @GET("/balance")
-    public Object balance() {
-        return service.getBalance();
+    public Object balance(Context ctx) {
+        return getUserService(ctx).getBalance();
     }
 
     @GET("/transactions")
-    public Object transactions() {
-        return service.getHistory();
+    public Object transactions(Context ctx) {
+        return getUserService(ctx).getHistory();
+    }
+
+    @GET("/deposit-page")
+    public ModelAndView depositPage(Context ctx) {
+        return new ModelAndView("deposit.hbs", new HashMap<>());
+    }
+
+    @GET("/withdraw-page")
+    public ModelAndView withdrawPage(Context ctx) {
+        return new ModelAndView("withdraw.hbs", new HashMap<>());
+    }
+
+    @GET("/history")
+    public ModelAndView historyPage(Context ctx) {
+        CashService userService = getUserService(ctx);
+        Map<String, Object> model = new HashMap<>();
+        model.put("history", userService.getHistory());
+        return new ModelAndView("history.hbs", model);
     }
 
     @GET("/cashsidefrontend")
     public ModelAndView showDashboard(Context ctx) {
 
-        // Get logged-in username from session
-        String username = ctx.session().get("user").value((String) null);
-        if (username == null) {
+        String userId = ctx.session().get("userId").value((String) null);
+        if (userId == null) {
             ctx.sendRedirect("/login");
             return null;
         }
 
-        // Load saved balance from CSV
-        int savedBalance = users.getBalance(username);
-
-        // Only reset if the current balance is NOT already the saved balance
-        if (service.getBalance() != savedBalance) {
-            // Reset to 0 only if balance is > 0 (avoid withdraw(0) error)
-            if (service.getBalance() > 0) {
-                service.withdraw(service.getBalance());
-            }
-
-            // Load saved balance (only if > 0 to avoid deposit(0) errors)
-            if (savedBalance > 0) {
-                service.deposit(savedBalance);
-            }
-        }
-
+        User user = users.findById(userId);
+        CashService userService = getUserService(ctx);
 
         Map<String, Object> model = new HashMap<>();
-        model.put("balance", service.getBalance());
-        model.put("history", service.getHistory());
-        model.put("name", "Customer");
+        model.put("balance", userService.getBalance());
+        model.put("history", userService.getHistory());
+        model.put("name", user.getName());
 
         String error = ctx.query("error").value((String) null);
         model.put("error", error);
@@ -162,4 +188,3 @@ public class CashController extends Jooby {
         return new ModelAndView("cash.hbs", model);
     }
 }
-

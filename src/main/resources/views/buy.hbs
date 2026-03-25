@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Buy Shares</title>
+    <link rel="stylesheet" href="/assets/buy-sell.css">
+</head>
+
+<body class="invest-page">
+
+<nav class="top-nav">
+    <a href="/investments/investmentsfrontend">Investments</a>
+    <a href="/investments/historyfrontend">History</a>
+</nav>
+
+<section class="invest-container">
+    <h2>Buy Shares</h2>
+
+    <!-- cashBalance is raw pence, so convert to pounds here -->
+    <p style="color: #ffffff;">Cash available: 
+        <strong class="gbp">
+            £{{cashBalance}}
+        </strong>
+    </p>
+
+    <form action="/investments/buy" method="POST" id="buyForm">
+
+        <label for="ticker">Select Stock:</label>
+        <select id="ticker" name="ticker" required>
+            <option value="">-- choose --</option>
+            {{#each tickerOptions}}
+                <option value="{{this}}">{{this}}</option>
+            {{/each}}
+        </select>
+
+        <label for="shares">Shares to Buy:</label>
+        <input id="shares" name="shares" type="number" min="1" required>
+
+        <button type="submit" id="buyBtn" disabled>Buy</button>
+    </form>
+</section>
+
+<script>
+(function () {
+    const ticker = document.getElementById('ticker');
+    const shares = document.getElementById('shares');
+    const btn = document.getElementById('buyBtn');
+
+    // cashBalance is pence → convert to pounds for comparison
+    const cashPence = {{cashBalance}};
+    const cash = cashPence / 100.0;
+
+    function update() {
+        const qty = parseInt(shares.value) || 0;
+
+        // Keep this — enables button only when shares > 0
+        btn.disabled = !(qty > 0);
+    }
+
+    ticker.addEventListener('change', update);
+    shares.addEventListener('input', update);
+})();
+</script>
+
+</body>
+</html>

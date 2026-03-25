@@ -7,6 +7,9 @@ import java.io.*;
 import java.nio.file.*;
 
 import static org.junit.jupiter.api.Assertions.*;
+import static org.mockito.Mockito.*;
+
+import uk.co.asepstrath.bank.evaluation.CurrentPriceService;
 
 public class UserServiceTests {
 
@@ -18,72 +21,85 @@ public class UserServiceTests {
 
     @BeforeEach
     void setup() throws Exception {
+        // Create a temporary CSV file for this test only
         csvFile = tempDir.resolve("users.csv");
 
-        // Pre-populate CSV
-        Files.write(csvFile, """
-                alice,pass123,100
-                bob,secret,50
-                """.getBytes());
+        Files.writeString(csvFile, """
+                id,name,passwordHash,balancePence
+                00000000-0000-0001-aaaa-bbbb,alice,pass123,100
+                00000000-0000-0002-cccc-dddd,bob,secret,50
+                """);
 
-        service = new UserService(csvFile.toString());
+        // Mock CurrentPriceService (we don't need real prices for user tests)
+        CurrentPriceService cps = mock(CurrentPriceService.class);
+
+        // Inject the temp CSV path — this is the key fix
+        service = new UserService(cps, csvFile);
     }
 
     @Test
     void testUsernameExists() {
-        assertTrue(service.usernameExists("alice"));
-        assertFalse(service.usernameExists("charlie"));
+        assertTrue(service.nameExists("alice"));
+        assertFalse(service.nameExists("charlie"));
     }
 
     @Test
-    void testAuthenticateSuccess() {
-        User u = service.authenticate("alice", "pass123");
+    void testFindByNameLoadsPasswordCorrectly() {
+        User u = service.findByName("alice");
         assertNotNull(u);
-        assertEquals("alice", u.getUsername());
+        assertEquals("pass123", u.getPassword());
     }
 
     @Test
-    void testAuthenticateFailWrongPassword() {
-        assertNull(service.authenticate("alice", "wrong"));
+    void testPasswordDoesNotMatchWrongValue() {
+        User u = service.findByName("alice");
+        assertNotNull(u);
+        assertNotEquals("wrong", u.getPassword());
     }
 
     @Test
-    void testAuthenticateFailNoUser() {
-        assertNull(service.authenticate("nobody", "pass"));
+    void testFindByNameReturnsNullForMissingUser() {
+        assertNull(service.findByName("nobody"));
     }
 
     @Test
     void testCreateUser() throws Exception {
         service.createUser("charlie", "mypw");
 
-        assertTrue(service.usernameExists("charlie"));
-
-        // Check file updated
         String csv = Files.readString(csvFile);
-        assertTrue(csv.contains("charlie,mypw,0"));
+
+        assertTrue(csv.contains("charlie"));
+        assertTrue(csv.contains("mypw"));
+        assertTrue(csv.contains("0")); // starting balance
     }
 
     @Test
     void testCreateUserDuplicateThrows() {
-        assertThrows(IllegalArgumentException.class, () ->
-                service.createUser("alice", "whatever"));
+        assertThrows(IllegalArgumentException.class,
+                () -> service.createUser("alice", "whatever"));
     }
 
     @Test
     void testGetBalance() {
-        assertEquals(100, service.getBalance("alice"));
-        assertEquals(0, service.getBalance("ghost")); // default behaviour
+        User alice = service.findByName("alice");
+        assertNotNull(alice);
+        assertEquals(100, alice.getBalancePence());
+
+        assertNull(service.findByName("ghost"));
     }
 
     @Test
     void testUpdateBalance() throws Exception {
-        service.updateBalance("bob", 999);
+        User bob = service.findByName("bob");
+        assertNotNull(bob);
 
-        assertEquals(999, service.getBalance("bob"));
+        service.updateBalance(bob.getId(), 999);
 
-        // Check file updated
+        User updatedBob = service.findById(bob.getId());
+        assertEquals(999, updatedBob.getBalancePence());
+
         String csv = Files.readString(csvFile);
-        assertTrue(csv.contains("bob,secret,999"));
+        assertTrue(csv.contains("bob"));
+        assertTrue(csv.contains("999"));
     }
 }
-

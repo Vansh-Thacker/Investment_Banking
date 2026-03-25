@@ -9,25 +9,19 @@
 <body class="auth-page">
 
 <nav class="top-nav">
-    <a href="/cash/cashsidefrontend">Home</a>
+    <a href="/investments/investmentsfrontend">Investments Dashboard</a>
+    <a href="/cash/history">Transaction History</a>
     <a href="/logout">Logout</a>
 </nav>
 
 <section id="summary" class="auth-form">
-    <h2>Account Summary</h2>
+    <h2>Welcome {{name}}</h2>
 
     <p><strong>Cash Balance:</strong> £<span id="cash-balance">{{balance}}</span></p>
 
     <div class="action-row">
-        <form id="depositForm" action="/cash/deposit" method="get">
-            <input name="amount" id="amount-input" type="number" step="0.01" placeholder="Amount (pounds)" />
-            <button type="submit">Deposit</button>
-        </form>
-
-        <form id="withdrawForm" action="/cash/withdraw" method="get">
-            <input name="amount" id="withdraw-amount-input" type="number" step="0.01" placeholder="Amount (pounds)" />
-            <button type="submit">Withdraw</button>
-        </form>
+        <a class="btn" href="/cash/deposit-page">Deposit</a>
+        <a class="btn" href="/cash/withdraw-page">Withdraw</a>
     </div>
 </section>
 
@@ -59,27 +53,6 @@
             const raw = balanceEl.textContent && balanceEl.textContent.trim();
             const pence = parseInt(raw || '0', 10) || 0;
             balanceEl.textContent = (pence / 100).toFixed(2);
-        }
-
-        const depositForm = document.getElementById('depositForm');
-        const withdrawForm = document.getElementById('withdrawForm');
-
-        if (depositForm) {
-            depositForm.addEventListener('submit', function (e) {
-                const input = document.getElementById('amount-input');
-                const val = parseFloat(input.value);
-                if (isNaN(val) || val <= 0) { e.preventDefault(); alert('Enter positive amount'); return; }
-                input.value = Math.round(val * 100);
-            });
-        }
-
-        if (withdrawForm) {
-            withdrawForm.addEventListener('submit', function (e) {
-                const input = document.getElementById('withdraw-amount-input');
-                const val = parseFloat(input.value);
-                if (isNaN(val) || val <= 0) { e.preventDefault(); alert('Enter positive amount'); return; }
-                input.value = Math.round(val * 100);
-            });
         }
     });
 </script>

@@ -1,0 +1,153 @@
+Investment Management – Backend Requirements (MVP Only)
+
+1) Core Investment Transaction Processing
+The system must ingest and process historical investment transactions in strict chronological order. Transactions come from CSV files and/or the ASEP /api/transactions endpoint.
+
+BUY transactions:
+- Record:
+  - Timestamp
+  - Ticker (uppercase, 1–5 letters)
+  - Shares (positive integer)
+  - Price per share (positive number)
+  - Total cost = shares × price
+  - Updated position after transaction
+- Logic:
+  - Deduct total cost from cash balance.
+  - Validate sufficient cash:
+    - If insufficient: log a validation WARNING but still process.
+  - Increase position.
+  - Update average book price (weighted average).
+  - Store transaction record.
+
+SELL transactions:
+- Record:
+  - Timestamp
+  - Ticker
+  - Shares (positive integer)
+  - Price per share
+  - Total proceeds = shares × price
+  - Updated position after transaction
+- Logic:
+  - Validate sufficient shares:
+    - If insufficient: log a validation ERROR but still process.
+  - Add proceeds to cash balance.
+  - Decrease position.
+  - Update average book price if shares remain.
+  - Store transaction record.
+
+Position tracking:
+- Maintain for each ticker:
+  - Total shares owned.
+  - Average book price.
+  - Total invested amount.
+
+Validation rules:
+- Ticker format: uppercase letters, length 1–5.
+- Shares: positive integer.
+- Price: positive number.
+- BUY requires sufficient cash (warning if not).
+- SELL requires sufficient shares (error if not).
+- All monetary values must use correct precision.
+
+2) Cash Integration
+- BUY → deduct (shares × price) from cash balance.
+- SELL → add (shares × price) to cash balance.
+- If insufficient cash or shares based on historical data:
+  - Log discrepancy but still process.
+- Cash balances come from /api/investors and must be updated consistently.
+
+3) Investment Evaluation (Unrealized P&L)
+For each open position:
+- Use latest price from /api/prices/{symbol}.
+- Compute:
+  - Current value = shares × latest price.
+  - Book value = shares × average book price.
+  - P&L = current value – book value.
+  - P&L % = (P&L / book value) × 100 (if book value > 0).
+
+Portfolio-level:
+- Total portfolio value = sum of all position current values + cash balance.
+
+4) Capital Gains (Realized P&L on SELL)
+Only SELL transactions generate realized gains/losses.
+
+Per-transaction:
+- Cost basis = shares sold × average book price at time of sale.
+- Sale proceeds = shares sold × sale price.
+- Realized gain/loss = sale proceeds – cost basis.
+- Store realized gain/loss with the transaction.
+
+Annual summary (tax year = 1 Jan – 31 Dec):
+- Aggregate all SELL transactions:
+  - Total gains (sum of positive realized gains).
+  - Total losses (sum of negative realized gains).
+  - Net capital gains = total gains + total losses.
+- Apply simplified UK rules:
+  - Allowance: £3,000.
+  - Taxable gains = max(0, net capital gains – £3,000).
+  - Tax rate: 24%.
+  - Estimated tax owed = taxable gains × 0.24.
+- Provide:
+  - Total gains.
+  - Total losses.
+  - Net capital gains.
+  - Allowance used.
+  - Allowance remaining.
+  - Estimated tax owed.
+
+5) Portfolio Categorization (Equities Only – No ETF Look-Through for MVP)
+ETF processing and ETF look-through are NOT required for MVP.
+
+For each equity position:
+- Fetch sector from /api/equities.
+- Compute value = shares × latest price.
+
+Group positions by sector:
+- For each sector:
+  - Total sector value = sum of values of all tickers in that sector.
+  - Percentage of total portfolio = sector value / total portfolio value.
+  - List of tickers in that sector with their values.
+
+Cash is excluded from categorization.
+
+6) Required ASEP API Endpoints
+GET /api/investors:
+- Returns investor ID, name, and current cash balance.
+
+GET /api/transactions:
+- Paginated list of:
+  - Transaction ID
+  - Date
+  - Type: DEPOSIT / WITHDRAW / BUY / SELL
+  - Investor ID
+  - Ticker (for BUY/SELL)
+  - Total cash amount
+
+GET /api/equities:
+- Returns:
+  - Name
+  - Ticker
+  - Sector
+
+GET /api/prices/{symbol}:
+- Returns:
+  - Date
+  - Price
+
+7) QA / Testing Expectations
+Your implementation must satisfy the QA test suite, including:
+- BUY with sufficient cash.
+- BUY with insufficient cash (warning).
+- SELL with sufficient shares.
+- SELL with insufficient shares (error).
+- Selling all shares of a position.
+- Multiple BUYs of same ticker (correct average price).
+- Buy → sell → buy sequences.
+- Correct cash balance updates.
+- Handling invalid tickers.
+- Handling negative or zero quantities.
+- Strict chronological processing.
+- Correct realized gains per SELL.
+- Correct annual capital gains summary and tax calculation.
+
+End of backend-relevant MVP requirements.

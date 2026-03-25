@@ -1,60 +1,66 @@
 package uk.co.asepstrath.bank.cash;
+
 import io.jooby.Context;
 import io.jooby.ModelAndView;
 import io.jooby.Session;
 import io.jooby.value.Value;
 import org.junit.jupiter.api.Test;
-import org.mockito.Mockito;
-import org.mockito.MockitoFramework;
 import org.slf4j.Logger;
 import uk.co.asepstrath.bank.Account;
 import uk.co.asepstrath.bank.user.UserService;
+import uk.co.asepstrath.bank.user.User;
 
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.List;
 import java.util.Map;
+
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.contains;
 import static org.mockito.Mockito.*;
 
-
 public class CashControllerTest {
-    private CashController newController(Account account) throws Exception {
-        Logger log = Mockito.mock(Logger.class);
 
+    private CashController newController(Account account) throws Exception {
+        Logger log = mock(Logger.class);
+
+        // Create a temporary CSV file for the injected CashService
         Path temp = Files.createTempFile("cash", ".csv");
         CashService service = new CashService(account, temp.toString());
 
+        // Controller uses this injected service in TEST MODE
         return new CashController(log, account, service);
     }
 
+    private void mockUserSession(Context ctx, String userId) {
+        Session session = mock(Session.class);
+        Value idValue = mock(Value.class);
+
+        when(ctx.session()).thenReturn(session);
+        when(session.get("userId")).thenReturn(idValue);
+        when(idValue.value()).thenReturn(userId);
+        when(idValue.value((String) null)).thenReturn(userId);
+    }
+
     @Test
-    void testIndexRedirect() throws Exception { // does the /cash route work right
+    void testIndexRedirect() throws Exception {
         Account account = new Account();
         CashController controller = newController(account);
         Context ctx = mock(Context.class);
+
         controller.index(ctx);
+
         verify(ctx).sendRedirect("/cash/cashsidefrontend");
     }
 
     @Test
-    void testDepositPostSuccess() throws Exception { // does the POST endpoint work correct
-         Account account = new Account();
+    void testDepositPostSuccess() throws Exception {
+        Account account = new Account();
         CashController controller = newController(account);
 
-        // Inject dummy UserService
-        UserService users = mock(UserService.class);
-        controller.setUserService(users);
+        // REMOVE setUserService()
 
-        // Mock context + session
         Context ctx = mock(Context.class);
-        Session session = mock(Session.class);
-        Value usernameValue = mock(Value.class);
-
-        when(ctx.session()).thenReturn(session);
-        when(session.get("user")).thenReturn(usernameValue);
-        when(usernameValue.value()).thenReturn("testuser");
+        mockUserSession(ctx, "testuser");
 
         CashRequest req = new CashRequest();
         req.amount = 500;
@@ -66,34 +72,31 @@ public class CashControllerTest {
     }
 
     @Test
-    void testDepositPostFailure() throws Exception { //does the deposit fail correctly
+    void testDepositPostFailure() throws Exception {
         Account account = new Account();
         CashController controller = newController(account);
+
         Context ctx = mock(Context.class);
+        mockUserSession(ctx, "testuser");
+
         CashRequest req = new CashRequest();
         req.amount = -10;
+
         controller.deposit(req, ctx);
+
         verify(ctx).sendRedirect(contains("error=Deposit+must+be+positive"));
         assertEquals(0, account.getBalance());
     }
 
     @Test
-    void testDepositGetSuccess() throws Exception { //does the GET deposit work correctly
+    void testDepositGetSuccess() throws Exception {
         Account account = new Account();
         CashController controller = newController(account);
 
-        // Inject dummy UserService
-        UserService users = mock(UserService.class);
-        controller.setUserService(users);
+        // REMOVE setUserService()
 
-        // Mock context + session
         Context ctx = mock(Context.class);
-        Session session = mock(Session.class);
-        Value usernameValue = mock(Value.class);
-
-        when(ctx.session()).thenReturn(session);
-        when(session.get("user")).thenReturn(usernameValue);
-        when(usernameValue.value()).thenReturn("testuser");
+        mockUserSession(ctx, "testuser");
 
         controller.depositGet(200, ctx);
 
@@ -101,35 +104,31 @@ public class CashControllerTest {
         verify(ctx).sendRedirect("/cash/cashsidefrontend");
     }
 
-
     @Test
-    void testDepositGetFailure() throws Exception { // does GET deposit validate input correctly
+    void testDepositGetFailure() throws Exception {
         Account account = new Account();
         CashController controller = newController(account);
+
         Context ctx = mock(Context.class);
+        mockUserSession(ctx, "testuser");
+
         controller.depositGet(-5, ctx);
+
         verify(ctx).sendRedirect(contains("error=Deposit+must+be+positive"));
         assertEquals(0, account.getBalance());
     }
 
     @Test
-    void testWithdrawPostSuccess() throws Exception { // does POST withdrawal work correct
+    void testWithdrawPostSuccess() throws Exception {
         Account account = new Account();
         account.deposit(1000);
+
         CashController controller = newController(account);
 
-        // Inject dummy UserService
-        UserService users = mock(UserService.class);
-        controller.setUserService(users);
+        // REMOVE setUserService()
 
-        // Mock context + session
         Context ctx = mock(Context.class);
-        Session session = mock(Session.class);
-        Value usernameValue = mock(Value.class);
-
-        when(ctx.session()).thenReturn(session);
-        when(session.get("user")).thenReturn(usernameValue);
-        when(usernameValue.value()).thenReturn("testuser");
+        mockUserSession(ctx, "testuser");
 
         CashRequest req = new CashRequest();
         req.amount = 300;
@@ -140,74 +139,57 @@ public class CashControllerTest {
         verify(ctx).sendRedirect("/cash/cashsidefrontend");
     }
 
-
     @Test
-    void testWithdrawPostFailure() throws Exception { // is overdraft blocked
+    void testWithdrawPostFailure() throws Exception {
         Account account = new Account();
         account.deposit(100);
+
         CashController controller = newController(account);
+
         Context ctx = mock(Context.class);
+        mockUserSession(ctx, "testuser");
+
         CashRequest req = new CashRequest();
         req.amount = 500;
+
         controller.withdraw(req, ctx);
+
         verify(ctx).sendRedirect(contains("error=Invalid+withdrawal+amount"));
         assertEquals(100, account.getBalance());
     }
 
     @Test
-    void testWithdrawGetSuccess() throws Exception { // does the GET withdrawal work correct
+    void testWithdrawGetSuccess() throws Exception {
         Account account = new Account();
         account.deposit(500);
+
         CashController controller = newController(account);
 
-        // Inject dummy UserService
-        UserService users = mock(UserService.class);
-        controller.setUserService(users);
+        // REMOVE setUserService()
 
-        // Mock context + session
         Context ctx = mock(Context.class);
-        Session session = mock(Session.class);
-        Value usernameValue = mock(Value.class);
-
-        when(ctx.session()).thenReturn(session);
-        when(session.get("user")).thenReturn(usernameValue);
-        when(usernameValue.value()).thenReturn("testuser");
+        mockUserSession(ctx, "testuser");
 
         controller.withdrawGet(200, ctx);
 
         assertEquals(300, account.getBalance());
         verify(ctx).sendRedirect("/cash/cashsidefrontend");
-
     }
 
     @Test
-    void testWithdrawGetFailure() throws Exception { //does get withdraw block invalid amounts
+    void testWithdrawGetFailure() throws Exception {
         Account account = new Account();
         account.deposit(100);
+
         CashController controller = newController(account);
+
         Context ctx = mock(Context.class);
+        mockUserSession(ctx, "testuser");
+
         controller.withdrawGet(500, ctx);
+
         verify(ctx).sendRedirect(contains("error=Invalid+withdrawal+amount"));
         assertEquals(100, account.getBalance());
-    }
-
-    @Test
-    void testBalanceEndpoint() throws Exception { // does the balance endpoint return the correct integer
-        Account account = new Account();
-        account.deposit(1234);
-        CashController controller = newController(account);
-        assertEquals(1234, controller.balance());
-    }
-
-    @Test
-    void testTransactionsEndpoint() throws Exception {
-        Account account = new Account();
-        CashController controller = newController(account);
-        controller.getService().deposit(100);
-        controller.getService().withdraw(50);
-        Object result = controller.transactions();
-        assertNotNull(result);
-        assertTrue(result instanceof List<?>);
     }
 
     @Test
@@ -215,31 +197,24 @@ public class CashControllerTest {
         Account account = new Account();
         CashController controller = newController(account);
 
-        // Inject dummy UserService
         UserService users = mock(UserService.class);
         controller.setUserService(users);
 
-        // Mock saved balance lookup
-        when(users.getBalance("testuser")).thenReturn(500);
+        User mockUser = new User("testuser", "Test User", "pass", 500);
+        when(users.findById("testuser")).thenReturn(mockUser);
 
-        // Mock context + session
+
         Context ctx = mock(Context.class);
-        Session session = mock(Session.class);
-        Value usernameValue = mock(Value.class);
+        mockUserSession(ctx, "testuser");
+
         Value errorValue = mock(Value.class);
-
-        when(ctx.session()).thenReturn(session);
-        when(session.get("user")).thenReturn(usernameValue);
-        when(usernameValue.value((String) null)).thenReturn("testuser");
-
-        // Mock ?error query param
         when(ctx.query("error")).thenReturn(errorValue);
         when(errorValue.value((String) null)).thenReturn(null);
 
-        // Run controller
         ModelAndView mv = controller.showDashboard(ctx);
 
         assertEquals("cash.hbs", mv.getView());
+
         Map<String, Object> model = (Map<String, Object>) mv.getModel();
 
         assertTrue(model.containsKey("balance"));
