@@ -69,7 +69,7 @@ public class CapitalGainsService {
 
         } catch (Exception e) {
             System.out.println("ERROR LOADING PRICES CSV");
-            e.printStackTrace();
+            //e.printStackTrace();
         }
 
         System.out.println("=== FINISHED LOADING PRICES ===");
@@ -180,7 +180,7 @@ public class CapitalGainsService {
 
         } catch (Exception e) {
             System.out.println("ERROR LOADING HISTORY CSV");
-            e.printStackTrace();
+            //e.printStackTrace();
         }
 
         System.out.println("=== FINISHED LOADING HISTORY ===");
